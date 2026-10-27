@@ -14,7 +14,7 @@ import type { HideCallButtonsStorage } from '../settings'
  *
  * One patch type throughout: `after` on the render React calls -- `.type` for the `React.memo`
  * wrappers, `.default` for the plain functions. Modules are found by Discord source path
- * (`getModuleWithImportedPath`, coding rule 3): on 349.5 and later these components' function
+ * (`getModuleWithImportedPath`): on 349.5 and later these components' function
  * names are minified, so `withName` has nothing stable to match.
  *
  * | Surface       | Source file                                                | Rule                                  |

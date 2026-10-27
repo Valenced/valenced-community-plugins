@@ -18,7 +18,7 @@ type Props = ComponentProps<
 export default function Settings({ api }: Props) {
 	// The changelog icon at the top right, and "What's new" once after an update.
 	useChangelog()
-	// Read per-render, never at module scope -- see docs/coding-rules.md rule 1.
+	// Read per-render, never at module scope: a lookup there can run before Discord's modules exist.
 	const { Page, TableRowAssetIcon } = components
 	const { ScrollView } = ReactNative
 	const { Stack, Text, TableRowGroup, TableSwitchRow } = Design

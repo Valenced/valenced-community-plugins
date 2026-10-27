@@ -14,7 +14,7 @@ export interface HideCallButtonsStorage extends ChangelogStorage {
  * so `jsonStorage.cache` is genuinely undefined for a short window after start.
  *
  * Older storage may still hold `upHideVideoButton`. Profiles have no camera button, so nothing
- * reads it; `jsonStorage.set` can't delete a key (coding rule 6), so it is left in place.
+ * reads it; `jsonStorage.set` merges and can't delete a key, so it is left in place.
  */
 export const DEFAULTS: HideCallButtonsStorage = {
 	// Same defaults as the original: profile call button hidden, DM and VC buttons kept.
