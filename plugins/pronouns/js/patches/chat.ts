@@ -162,7 +162,7 @@ export default function patchChat(cleanup: Cleanup) {
 				// With `returnNamespace` the match is the namespace, which has `default`.
 				const mod = getTagProperties as GetTagPropertiesModule
 				cleanup(
-					// One `instead`, forwarding `this` and the args (coding rule 2). Other plugins
+					// One `instead`, forwarding `this` and the args with Reflect.apply. Other plugins
 					// hook this function too; since the patcher fix of 2026-10-24 any mix of hooks
 					// chains safely.
 					instead(mod, 'default', function (args, original) {

@@ -3,7 +3,7 @@
  * (patches/messageSheet.tsx) and from the People settings page, so editing an override looks the
  * same from both entry points.
  *
- * Call from an event handler: `valenced.*` is read here, so module scope is out (coding rule 1).
+ * Call from an event handler: `valenced.*` is read here, and it is only safe to read once Discord has loaded, never at module scope.
  */
 
 import { AlertActionCreators } from '@valenced/discord/actions'

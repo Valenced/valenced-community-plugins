@@ -15,7 +15,7 @@ type Props = ComponentProps<typeof Design.TextInput> &
 		isClearable?: boolean
 	}
 
-/** Read inside a render, never at module scope (coding rule 1). */
+/** Read inside a render, never at module scope: `Design` is only safe to read once Discord has loaded. */
 export function textInput(): ComponentType<Props> {
 	return Design.TextInput as ComponentType<Props>
 }

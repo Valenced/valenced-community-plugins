@@ -8,7 +8,7 @@ import { lookupGeneratedIconComponent } from '@valenced/utils/discord'
  * `lookupGeneratedIconComponent` can see. Each name is tried both ways before the next; if every
  * name misses, the row gets no icon rather than a broken image.
  *
- * Call from inside a render (coding rule 1).
+ * Call from inside a render, never at module scope: the lookups are only safe once Discord has loaded.
  */
 export function rowIcon(...names: [string, ...string[]]) {
 	return findIcon(names, false)

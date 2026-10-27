@@ -6,7 +6,7 @@
  *
  * Saving: until the file has loaded, a write is a merge (so it can't wipe what's on disk); once
  * loaded, the whole mirror replaces the file. That keeps removals removed without tombstones
- * piling up (coding rule 6: `set()` can't delete a key), and is what makes the lists stick across
+ * piling up (a merge `set()` can never delete a key), and is what makes the lists stick across
  * restarts.
  */
 
@@ -136,7 +136,7 @@ function merge(
  * Brings a file written under older defaults up to date, once per bound handle. Every save
  * writes the whole settings object, so a user who never touched "Only real pronouns" still has
  * `validOnly: false` on disk from before 0.5.0, and the new default alone would change nothing
- * for them (a present key beats the default, rule 6). The file can't tell "turned off on purpose"
+ * for them (a present key beats the default). The file can't tell "turned off on purpose"
  * from "never touched", so everyone gets the new default once; the changelog says where to turn
  * it off.
  */

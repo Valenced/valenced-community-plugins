@@ -3,7 +3,7 @@ import { Design } from '@valenced/discord/design'
 
 /**
  * Asks before a destructive action, in Discord's own alert dialog, with the action in red above
- * Cancel. Call from an event handler (coding rule 1).
+ * Cancel. Call from an event handler, never at module scope: `Design` is only safe to read once Discord has loaded.
  */
 export function confirmDestructive(options: {
 	title: string

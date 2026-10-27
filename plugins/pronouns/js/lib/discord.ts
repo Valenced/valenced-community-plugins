@@ -74,7 +74,7 @@ export function watchDiscord(): () => void {
 	const unsubActions = getModules(
 		withProps<UserActionCreators>('fetchProfile', 'fetchCurrentUser'),
 		exports => {
-			// The export is usually on `default` (coding rule 3), but a namespace match carries
+			// The export is usually on `default`, but a namespace match carries
 			// the functions directly.
 			const fn =
 				exports.fetchProfile ??
