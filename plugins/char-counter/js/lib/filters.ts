@@ -1,6 +1,6 @@
 /**
  * Finds a `React.memo` component by the `displayName` Discord's compiler sets on the function it
- * wraps. `withName` can't see through a memo wrapper (coding rule 3); this is the filter Palm's
+ * wraps. `withName` can't see through a memo wrapper (it has no name of its own); this is the filter Palm's
  * Better Chat Buttons uses for the same chat-input components.
  *
  * Checked in the 352.2 bundle: `modules/chat_input/native/ChatInput.tsx` and

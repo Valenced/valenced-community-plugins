@@ -36,7 +36,7 @@ export function useLength(): number {
 	return length
 }
 
-/** The module `getMaxMessageLength` lives in. The function is on the namespace or on `default` (rule 3). */
+/** The module `getMaxMessageLength` lives in. The function is on the namespace or on its `default` export. */
 export interface MaxLengthModule {
 	getMaxMessageLength?(): number
 	default?: { getMaxMessageLength?(): number }

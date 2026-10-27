@@ -27,7 +27,7 @@ export const FONT_SIZE = { min: 10, max: 20, default: 12 } as const
 export const SPLIT_DELAY = { min: 0, max: 10, step: 0.5, default: 1 } as const
 export const SPLIT_MAX = { min: 2, max: 10, default: 5 } as const
 
-/** Also the fallback for every read: `load: true` doesn't wait for storage (coding rule 7). */
+/** Also the fallback for every read: `load: true` doesn't wait for storage, so `cache` can be empty. */
 export const DEFAULTS: CharCounterStorage = {
 	show: 'count',
 	side: 'left',

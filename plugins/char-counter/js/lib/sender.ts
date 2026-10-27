@@ -311,7 +311,7 @@ function restoreDraft(channelId: string, content: string) {
 			const [exports] = lookupModule(
 				withProps<DraftActions>('saveDraft', 'clearDraft'),
 			)
-			// The export is usually on `default`, not on the namespace -- coding rule 3.
+			// The export is usually on `default`, not on the namespace itself.
 			const host =
 				typeof exports?.saveDraft === 'function' ? exports : exports?.default
 			saveDraft = host?.saveDraft?.bind(host)

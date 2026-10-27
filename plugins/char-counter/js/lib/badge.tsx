@@ -142,7 +142,7 @@ export function CounterSquare({
 	colour: string
 	fontSize: number
 }) {
-	// Read per-render, never at module scope -- see docs/coding-rules.md rule 1.
+	// Read per-render: Discord's design module isn't there yet when the bundle is evaluated.
 	const { Text } = Design
 	return (
 		<View
