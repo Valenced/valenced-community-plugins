@@ -1,0 +1,10 @@
+This plugin adapts code from:
+
+1. RevengePlugins by nexpid:
+   Source: https://github.com/nexpid/RevengePlugins/blob/main/src/plugins/clean-urls/src/stuff/patcher.ts
+   License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+   The sendMessage and editMessage patching logic is adapted from the above file.
+
+2. ClearURLs Rules:
+   Source: https://gitlab.com/ClearURLs/rules/-/blob/master/data.min.json
+   Tracking parameter patterns are derived from the globalRules and referralMarketing sections.

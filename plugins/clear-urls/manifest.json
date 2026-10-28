@@ -2,8 +2,11 @@
 	"format": 1,
 	"id": "hakuxyz.clear-urls",
 	"name": "ClearURLs",
-	"description": "Strips tracking parameters (utm_*, fbclid, gclid, igshid, ...) from URLs you copy.",
+	"description": "Strips tracking parameters (utm_*, fbclid, gclid, igshid, ...) from URLs you copy, edit, or send.",
 	"author": "hakuxyz (https://github.com/hakuxyz \"GitHub\")",
+	"contributors": [
+		"nexpid <853550207039832084> (https://github.com/nexpid \"GitHub\")"
+	],
 	"version": "1.0.0",
 	"dependencies": {
 		"valenced.api": {
