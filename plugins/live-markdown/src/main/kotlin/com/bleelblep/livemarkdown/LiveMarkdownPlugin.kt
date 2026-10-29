@@ -13,35 +13,39 @@ import android.widget.TextView
 import app.valenced.plugins.PluginScope
 import app.valenced.plugins.plugin
 import app.valenced.xposed.api.registerNativeMethod
+import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XposedBridge
+import java.lang.reflect.Member
 import java.util.WeakHashMap
-
-/**
- * Styles markdown in the message box as you type it. Discord's box is `DCDChatInput`; its own
- * styling (mentions, emoji) arrives from JS as "chat nodes" that become `DCDInputSpan`s, and
- * `ChatInputRootView.clearAndApplyChatNodes` only ever removes those (checked on 348), so spans
- * of ours survive alongside. Only spans are added: the text Discord reads and sends is untouched.
- *
- * A TextWatcher is attached the first time a box changes (hooked through `TextView.onTextChanged`,
- * which DCDChatInput doesn't override) and re-parses the whole text after every edit; messages are
- * at most a few thousand characters, so that's cheap.
- *
- * JS owns the settings: `start` and every write push them through `setSettings`, and nothing
- * here is saved to disk.
- */
 
 internal object Settings {
 	@Volatile var headings = true
 	@Volatile var dimMarkers = true
 	@Volatile var monoCode = true
-	/** The selection-menu formats that are switched on (Format ids). */
 	@Volatile var menu: Set<String> = Format.entries.map { it.id }.toSet()
 }
 
 private fun enabledFormats() = Format.entries.filter { it.id in Settings.menu }
 
 private const val CHAT_INPUT = "com.discord.chat.input.views.DCDChatInput"
-/** Discord's link blue. */
 private const val LINK_COLOR = 0xFF00A8FC.toInt()
+
+internal typealias HookParam = XC_MethodHook.MethodHookParam
+internal typealias Unhook = XC_MethodHook.Unhook
+
+internal fun hookMethod(
+	member: Member,
+	before: ((HookParam) -> Unit)? = null,
+	after: ((HookParam) -> Unit)? = null,
+): Unhook = XposedBridge.hookMethod(member, object : XC_MethodHook() {
+	override fun beforeHookedMethod(param: MethodHookParam) {
+		before?.invoke(param)
+	}
+
+	override fun afterHookedMethod(param: MethodHookParam) {
+		after?.invoke(param)
+	}
+})
 
 private fun withAlpha(color: Int, alpha: Int) = (color and 0x00FFFFFF) or (alpha shl 24)
 
@@ -80,17 +84,10 @@ private fun wantedSpans(view: TextView, text: String): List<Wanted> {
 	return out
 }
 
-/**
- * The hooks and the boxes they have attached to, made in `start` and thrown away in `stop`, so a
- * restart begins from nothing. Hooks go through the `hookMethod` helper in `XposedCompat.kt`.
- * Main thread only for [watchers]: the hook runs where the text changes, and
- * [setSettings] and [dispose] post there.
- */
 internal class MarkdownHooks(private val scope: PluginScope) {
 	private val mainHandler = Handler(Looper.getMainLooper())
 	private val watchers = WeakHashMap<TextView, TextWatcher>()
 
-	/** The one Discord name this plugin depends on. Missing means a Discord build we don't know. */
 	private val chatInputClass: Class<*> = runCatching { scope.classLoader.loadClass(CHAT_INPUT) }
 		.getOrElse { error("$CHAT_INPUT not found on this Discord version") }
 
@@ -111,7 +108,6 @@ internal class MarkdownHooks(private val scope: PluginScope) {
 		),
 	)
 
-	/** Takes the settings JS sent and restyles every open box with them. */
 	fun setSettings(settings: Map<*, *>) {
 		(settings["headings"] as? Boolean)?.let { Settings.headings = it }
 		(settings["dimMarkers"] as? Boolean)?.let { Settings.dimMarkers = it }
@@ -125,7 +121,6 @@ internal class MarkdownHooks(private val scope: PluginScope) {
 		}
 	}
 
-	/** Unhooks, detaches from every box, strips our spans and puts Discord's own menu callback back. */
 	fun dispose() {
 		for (unhook in unhooks) unhook.unhook()
 		mainHandler.post {
@@ -140,7 +135,7 @@ internal class MarkdownHooks(private val scope: PluginScope) {
 		}
 	}
 
-	/** Brings the box's spans in line with its text, adding and removing only what changed. */
+	// Discord's clearAndApplyChatNodes only removes its own DCDInputSpans, so ours survive
 	private fun restyle(view: TextView, text: Editable) {
 		runCatching {
 			val wanted = wantedSpans(view, text.toString()).associateBy { it.id }
@@ -161,14 +156,13 @@ internal class MarkdownHooks(private val scope: PluginScope) {
 		for (span in text.getSpans(0, text.length, MdSpan::class.java)) text.removeSpan(span)
 	}
 
-	/** Wraps whatever selection callback the box has with ours, once. */
 	private fun ensureMenu(view: TextView) {
 		val current = view.customSelectionActionModeCallback
 		if (current is FormatCallback) return
 		view.customSelectionActionModeCallback = FormatCallback(view, current, ::enabledFormats)
 	}
 
-	/** Discord sets its callback in ChatInputRootView's constructor; wrap it as it's set. */
+	// Discord sets its callback in ChatInputRootView's constructor
 	private fun onSetSelectionCallback(param: HookParam) {
 		val view = param.thisObject as? TextView ?: return
 		if (view.javaClass !== chatInputClass) return
@@ -179,7 +173,7 @@ internal class MarkdownHooks(private val scope: PluginScope) {
 	private fun onTextChanged(param: HookParam) {
 		val view = param.thisObject as? TextView ?: return
 		if (view.javaClass !== chatInputClass) return
-		// Boxes made before the plugin started missed the setter hook.
+		// Boxes made before the plugin started missed the setter hook
 		runCatching { ensureMenu(view) }
 		if (watchers.containsKey(view)) return
 		val watcher = object : TextWatcher {
@@ -197,7 +191,6 @@ val liveMarkdownPlugin = plugin {
 	var hooks: MarkdownHooks? = null
 
 	start {
-		// Throws when the message box class or a hook is missing, which disables the plugin with the reason.
 		hooks = MarkdownHooks(this)
 
 		registerNativeMethod("${manifest.id}.setSettings") { args ->

@@ -1,18 +1,10 @@
 package com.bleelblep.livemarkdown
 
-/** What a stretch of the message box should look like. */
 internal enum class Kind { MARKER, BOLD, ITALIC, UNDERLINE, STRIKE, SPOILER, CODE, LINK, H1, H2, H3, SUBTEXT, QUOTE }
 
 internal class Run(val kind: Kind, val start: Int, val end: Int)
 
-/**
- * A small parser for the markdown Discord renders, close enough to its own (simple-markdown based)
- * rules for a preview. It only reports ranges; nothing in the text is changed.
- *
- * Works on a masked copy: once something is claimed (an escape, code, a marker) its characters are
- * blanked to [MASK] so later rules can't match inside code or reuse a marker -- which is also how
- * `***both***` ends up bold and italic.
- */
+// Claimed characters (escapes, code, markers) are masked so later rules can't match inside them
 internal object Markdown {
 	private const val MASK = '\u0001'
 
@@ -26,7 +18,6 @@ internal object Markdown {
 	private val LIST = Regex("""^\s*[-*] (?=\S)""")
 	private val LINK = Regex("""\[([^\]\n]+)\]\((<?https?://[^)\s]+>?)\)""")
 
-	/** Paired markers, in the order they're claimed. Group 1 is the content. */
 	private val PAIRS = listOf(
 		Kind.BOLD to Regex("""\*\*([\s\S]+?)\*\*(?!\*)"""),
 		Kind.UNDERLINE to Regex("""__([\s\S]+?)__(?!_)"""),
@@ -65,7 +56,7 @@ internal object Markdown {
 			mask(a, b)
 		}
 
-		// Line rules. `>>>` quotes everything after it, so it ends the scan.
+		// `>>>` quotes everything after it
 		var lineStart = 0
 		var quoteAll = false
 		val view = masked()

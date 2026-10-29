@@ -5,12 +5,7 @@ import android.text.TextPaint
 import android.text.style.CharacterStyle
 import android.text.style.MetricAffectingSpan
 
-/**
- * Home-made spans instead of StyleSpan / UnderlineSpan / …: the framework ones are
- * `ParcelableSpan`s, so copying from the box and pasting would carry the styling into the text as
- * real formatting. These are dropped on copy. [key] identifies a span by look, so a restyle only
- * touches spans that actually changed.
- */
+// Not the framework spans: those are Parcelable, so copying from the box would carry the styling into the pasted text
 internal interface MdSpan {
 	val key: String
 }
