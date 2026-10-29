@@ -1,10 +1,10 @@
 {
 	"format": 1,
 	"id": "wolfie.add-attachments",
-	"name": "AddAttachments",
-	"description": "Upload queued attachments when saving a message edit.",
+	"name": "Add Attachments",
+	"description": "Add new attachments when editing messages.",
 	"author": "Wolfie <347096063569559553> (https://wolfies.org/ \"Website\") (https://github.com/Wolfkid200444 \"GitHub\")",
-	"icon": "PaperclipIcon",
+	"icon": "PencilSparkleIcon",
 	"version": "1.0.0",
 	"dependencies": {
 		"valenced.api": {
