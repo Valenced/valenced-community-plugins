@@ -1,0 +1,20 @@
+{
+	"format": 1,
+	"id": "mxtiy.audiofix",
+	"name": "Bluetooth Audio Fix",
+	"description": "Prevents Discord from switching to hands-free mode during calls.",
+	"author": "NoReplyUI5 <1053918356375351386> (https://github.com/NoReplyUI5 \"GitHub\")",
+	"icon": "voice_bar_bluetooth",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}

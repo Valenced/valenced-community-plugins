@@ -1,0 +1,24 @@
+{
+	"format": 1,
+	"id": "dev.cocobo1.petpet",
+	"name": "PetPet",
+	"description": "pet anyone with /petpet",
+	"author": "cocobo1 <767650984175992833> (https://cocobo1.dev \"Website\") (https://github.com/c0c0b01 \"GitHub\") (https://github.com/sponsors/c0c0b01 \"Donate\")",
+	"contributors": ["Wolfie <347096063569559553>"],
+	"version": "1.0.0",
+	"icon": "EmojiSmilingFaceWithHeartsIcon",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		},
+		"dev.cocobo1.command-lib": {
+			"version": ">=1 <2"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}

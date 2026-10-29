@@ -1,0 +1,5 @@
+export const AUTHOR_GITHUB = 'c0c0b01'
+export const SPONSORS_URL = 'https://github.com/sponsors/cocobo1'
+export const GITHUB_URL = 'https://github.com/cocobo1'
+export const WEBSITE_URL = 'https://cocobo1.dev'
+export const AVATAR_URL = 'https://github.com/c0c0b01.png'
