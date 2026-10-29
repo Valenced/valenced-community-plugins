@@ -68,6 +68,8 @@ interface Row {
 }
 
 const ZWSP = '​'
+// A space first, so a message that ends in a link keeps it as a link
+const REDRAW_MARK = ` ${ZWSP}`
 const MAX_RECENT_ROWS = 200
 
 const recent = new Map<string, Row>()
@@ -115,9 +117,9 @@ function redrawMessage(channelId: string, messageId: string) {
 			const copy: Message = Object.create(Object.getPrototypeOf(message))
 			Object.defineProperties(copy, Object.getOwnPropertyDescriptors(message))
 			if (typeof copy.content === 'string')
-				copy.content = copy.content.endsWith(ZWSP)
-					? copy.content.slice(0, -ZWSP.length)
-					: copy.content + ZWSP
+				copy.content = copy.content.endsWith(REDRAW_MARK)
+					? copy.content.slice(0, -REDRAW_MARK.length)
+					: copy.content + REDRAW_MARK
 			return copy
 		})
 		channelMessages.commit(updated)
