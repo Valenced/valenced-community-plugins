@@ -5,7 +5,7 @@
 	"description": "Counts your message's characters in a square above the message box, and splits long ones into several.",
 	"author": "bleelblep <119043674385547264>",
 	"icon": "TextIcon",
-	"version": "0.3.0",
+	"version": "1.0.0",
 	"dependencies": {
 		"valenced.api": {
 			"version": ">=1 <2"

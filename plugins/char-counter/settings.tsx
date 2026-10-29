@@ -2,45 +2,51 @@ import Page from '@valenced/components/Page'
 import TableRowAssetIcon from '@valenced/components/TableRowAssetIcon'
 import { Design } from '@valenced/discord/design'
 import { ScrollView, View } from 'react-native'
-import { DEFAULTS, FONT_SIZE, SPLIT_DELAY, SPLIT_MAX } from '../index'
-import { CounterSquare, fontSizeOf } from '../lib/badge'
-import { useChangelog } from '../lib/changelog'
-import { delaySecondsOf, maxPartsOf } from '../lib/sender'
-import { FieldRow } from './FieldRow'
+import {
+	CounterSquare,
+	clamp,
+	DefaultSettings,
+	FontSize,
+	SplitDelay,
+	SplitMax,
+} from './shared'
+import { delaySeconds, maxParts } from './split'
 import type { PluginSettingsComponent } from '@valenced/plugins/types'
-import type { ComponentProps } from 'react'
-import type { CharCounterStorage } from '../index'
+import type { ComponentProps, ReactNode } from 'react'
+import type { Settings } from './shared'
 
-type Props = ComponentProps<
-	PluginSettingsComponent<{ jsonStorage: CharCounterStorage }>
+const {
+	Slider,
+	Stack,
+	TableRadioGroup,
+	TableRadioRow,
+	TableRow,
+	TableRowGroup,
+	TableSwitchRow,
+	Text,
+} = Design
+
+type SettingComponentProps = ComponentProps<
+	PluginSettingsComponent<{ jsonStorage: Settings }>
 >
 
-export default function Settings({ api }: Props) {
-	// The changelog icon at the top right, and "What's new" once after an update.
-	useChangelog()
-	const {
-		Stack,
-		Text,
-		TableRowGroup,
-		TableSwitchRow,
-		TableRadioGroup,
-		TableRadioRow,
-		Slider,
-	} = Design
-
-	const s = { ...DEFAULTS, ...(api.jsonStorage.use() ?? {}) }
+export default function SettingsComponent({
+	api: { jsonStorage: storage },
+}: SettingComponentProps) {
+	const s = { ...DefaultSettings, ...storage.use() }
+	const fontSize = clamp(s.fontSize, FontSize)
 
 	return (
 		<Page>
 			<ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
 				<Stack spacing={24}>
-					<TableRadioGroup<CharCounterStorage['show']>
+					<TableRadioGroup
 						key={`show-${s.show}`}
 						title="Show"
 						description="In a small square above the message box, while you type. Past the limit it turns red and says how far over you are."
 						hasIcons
 						defaultValue={s.show}
-						onChange={show => api.jsonStorage.set({ show })}
+						onChange={(show: Settings['show']) => storage.set({ show })}
 					>
 						<TableRadioRow
 							label="Characters typed"
@@ -62,12 +68,12 @@ export default function Settings({ api }: Props) {
 						/>
 					</TableRadioGroup>
 
-					<TableRadioGroup<CharCounterStorage['side']>
+					<TableRadioGroup
 						key={`side-${s.side}`}
 						title="Side"
 						hasIcons
 						defaultValue={s.side}
-						onChange={side => api.jsonStorage.set({ side })}
+						onChange={(side: Settings['side']) => storage.set({ side })}
 					>
 						<TableRadioRow
 							label="Left"
@@ -82,7 +88,7 @@ export default function Settings({ api }: Props) {
 					</TableRadioGroup>
 
 					<TableRowGroup>
-						<FieldRow label="Text size">
+						<SliderRow label="Text size">
 							<View
 								style={{
 									flexDirection: 'row',
@@ -91,24 +97,24 @@ export default function Settings({ api }: Props) {
 								}}
 							>
 								<Text color="text-muted" variant="text-sm/normal">
-									{`${fontSizeOf(s)} pt${fontSizeOf(s) === FONT_SIZE.default ? ' (default)' : ''}`}
+									{`${fontSize} pt${fontSize === FontSize.default ? ' (default)' : ''}`}
 								</Text>
 								<CounterSquare
 									text="45 characters"
-									colour="text-muted"
-									fontSize={fontSizeOf(s)}
+									color="text-muted"
+									fontSize={fontSize}
 								/>
 							</View>
 							<Slider
 								step={1}
-								value={fontSizeOf(s)}
-								minimumValue={FONT_SIZE.min}
-								maximumValue={FONT_SIZE.max}
+								value={fontSize}
+								minimumValue={FontSize.min}
+								maximumValue={FontSize.max}
 								onValueChange={value =>
-									api.jsonStorage.set({ fontSize: Math.round(value) })
+									storage.set({ fontSize: Math.round(value) })
 								}
 							/>
-						</FieldRow>
+						</SliderRow>
 					</TableRowGroup>
 
 					<TableRowGroup hasIcons>
@@ -117,9 +123,7 @@ export default function Settings({ api }: Props) {
 							subLabel="Appears once a message is 90% of the way there"
 							icon={<TableRowAssetIcon name="EyeIcon" />}
 							value={!!s.onlyNearLimit}
-							onValueChange={value =>
-								api.jsonStorage.set({ onlyNearLimit: value })
-							}
+							onValueChange={onlyNearLimit => storage.set({ onlyNearLimit })}
 						/>
 					</TableRowGroup>
 
@@ -129,46 +133,71 @@ export default function Settings({ api }: Props) {
 							subLabel="Past the limit, the message goes out as several, cut at a blank line, a line break or the end of a sentence. Code blocks are closed and reopened."
 							icon={<TableRowAssetIcon name="ChatIcon" />}
 							value={!!s.split}
-							onValueChange={split => api.jsonStorage.set({ split })}
+							onValueChange={split => storage.set({ split })}
 						/>
 						{s.split ? (
-							<FieldRow
-								label={`Wait between messages — ${delaySecondsOf(s)} s`}
+							<SliderRow
+								label={`Wait between messages — ${delaySeconds(s)} s`}
 								description="So the parts arrive in order and read as one. A channel's slowmode wins when it's longer."
 							>
 								<Slider
-									step={SPLIT_DELAY.step}
-									value={delaySecondsOf(s)}
-									minimumValue={SPLIT_DELAY.min}
-									maximumValue={SPLIT_DELAY.max}
+									step={SplitDelay.step}
+									value={delaySeconds(s)}
+									minimumValue={SplitDelay.min}
+									maximumValue={SplitDelay.max}
 									onValueChange={value =>
-										api.jsonStorage.set({
-											splitDelaySec:
-												Math.round(value / SPLIT_DELAY.step) * SPLIT_DELAY.step,
+										storage.set({
+											splitDelaySec: clamp(value, SplitDelay),
 										})
 									}
 								/>
-							</FieldRow>
+							</SliderRow>
 						) : null}
 						{s.split ? (
-							<FieldRow
-								label={`At most — ${maxPartsOf(s)} messages`}
+							<SliderRow
+								label={`At most — ${maxParts(s)} messages`}
 								description="Anything longer is sent as typed, and Discord says it's too long."
 							>
 								<Slider
 									step={1}
-									value={maxPartsOf(s)}
-									minimumValue={SPLIT_MAX.min}
-									maximumValue={SPLIT_MAX.max}
+									value={maxParts(s)}
+									minimumValue={SplitMax.min}
+									maximumValue={SplitMax.max}
 									onValueChange={value =>
-										api.jsonStorage.set({ splitMax: Math.round(value) })
+										storage.set({ splitMax: Math.round(value) })
 									}
 								/>
-							</FieldRow>
+							</SliderRow>
 						) : null}
 					</TableRowGroup>
 				</Stack>
 			</ScrollView>
 		</Page>
+	)
+}
+
+function SliderRow({
+	label,
+	description,
+	children,
+}: {
+	label: string
+	description?: string
+	children: ReactNode
+}) {
+	return (
+		<TableRow
+			label={label}
+			subLabel={
+				<View style={{ gap: 8, marginTop: 8 }}>
+					{children}
+					{description ? (
+						<Text variant="text-sm/normal" color="text-muted">
+							{description}
+						</Text>
+					) : null}
+				</View>
+			}
+		/>
 	)
 }
