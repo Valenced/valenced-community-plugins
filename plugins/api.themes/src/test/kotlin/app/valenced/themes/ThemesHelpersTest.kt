@@ -41,6 +41,14 @@ class ThemesHelpersTest {
     }
 
     @Test
+    fun `italic family names map to defined upright families`() {
+        val chain = listOf("ggsans-NormalItalic", "NotoSans-NormalItalic")
+        assertEquals(listOf("ggsans-Normal", "NotoSans-NormalItalic") to true, italicFamiliesOf(chain, setOf("ggsans-Normal")))
+        assertEquals(chain to false, italicFamiliesOf(chain, setOf("ggsans-Normal", "ggsans-NormalItalic")))
+        assertEquals(listOf("ggsans-Normal") to false, italicFamiliesOf(listOf("ggsans-Normal"), setOf("ggsans-Normal")))
+    }
+
+    @Test
     fun `axes become font variation settings`() {
         assertEquals("'wght' 600, 'slnt' -10", fontVariationSettingsOf(linkedMapOf("wght" to 600f, "slnt" to -10f)))
         assertEquals("'opsz' 14.5", fontVariationSettingsOf(mapOf("opsz" to 14.5f)))

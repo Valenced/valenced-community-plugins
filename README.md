@@ -35,6 +35,7 @@ This repository comes **pre-installed with Valenced**. If you want to use these 
 
 | Name | Description | Authors | Version |
 | --- | --- | --- | --- |
+| [Add Attachments](plugins/add-attachments) | Add new attachments when editing messages. | Wolfie <347096063569559553> (https://wolfies.org/ "Website") (https://github.com/Wolfkid200444 "GitHub") | 1.0.0 |
 | [Anonymous File Names](plugins/anonymous-file-names) | Randomizes file names before you upload them. | k1ng_op <641266820187160576>, siguma, Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub") | 1.0.0 |
 | [Better Chat Buttons](plugins/better-chat-buttons) | Hiding all annoying chat buttons, or making them never collapse, all configurable. | Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub") | 1.0.0 |
 | [Better Typing Indicators](plugins/better-typing-indicators) | Typing indicator in channels, with user avatars, tap to open profile, and more. | Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub") | 1.0.0 |
@@ -64,7 +65,7 @@ This repository comes **pre-installed with Valenced**. If you want to use these 
 | [Sound Controls](plugins/sound-controls) | Mute individual call effects, ringtones, and in-app notification sounds. | Wolfie <347096063569559553> (https://wolfies.org/ "Website") (https://github.com/Wolfkid200444 "GitHub") | 1.0.0 |
 | [Tenor GIF Search](plugins/tenor-gif-search) | Brings back Tenor GIF search to Discord. | Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub"), Livie <755950362342457384> | 1.0.0 |
 | [Themes](plugins/settings.themes) | Color themes, font packs, icon packs, and emoji packs. | Valenced, Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub") | 1.0.0 |
-| [Themes API](plugins/api.themes) | Lets theme plugins provide color themes, font packs, icon packs, and emoji packs. | Valenced, Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub"), Ushie <399862294143696897> (https://github.com/Ushie "GitHub"), cocobo1 <767650984175992833> (https://github.com/C0C0B01 "GitHub") | 1.0.0 |
+| [Themes API](plugins/api.themes) | Lets theme plugins provide color themes, font packs, icon packs, and emoji packs. | Valenced, Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub"), Ushie <399862294143696897> (https://github.com/Ushie "GitHub"), cocobo1 <767650984175992833> (https://github.com/C0C0B01 "GitHub") | 1.0.1 |
 | [Who Reacted](plugins/who-reacted) | Shows the avatars of up to 5 people who reacted on each reaction in chat. | Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub") | 1.0.0 |
 
 <!-- PLUGINS_TABLE_END -->

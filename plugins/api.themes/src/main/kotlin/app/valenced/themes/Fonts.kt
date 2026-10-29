@@ -51,6 +51,23 @@ internal fun splitFontFamilies(name: String): List<String> =
     name.split(',').map { it.trim() }.filter { it.isNotEmpty() }
 
 /**
+ * Discord's native text uses specially named fonts (e.g. `ggsans-NormalItalic`).
+ * 
+ * Since packs pass only upright names (with `italic: true`), this maps missing italic font names to their upright counterparts if available,
+ * and returns the resolved names and whether any were remapped.
+ */
+internal fun italicFamiliesOf(names: List<String>, defined: Set<String>): Pair<List<String>, Boolean> {
+    var mapped = false
+    val result = names.map { name ->
+        val base = name.removeSuffix(ITALIC_SUFFIX)
+        if (name !in defined && base != name && base in defined) base.also { mapped = true } else name
+    }
+    return result to mapped
+}
+
+private const val ITALIC_SUFFIX = "Italic"
+
+/**
  * Font pack applied through React Native's `ReactFontManager`.
  *
  * Only names with a pack entry change. Everything else keeps the stock lookup.
@@ -74,15 +91,16 @@ internal class FontOverrides(
         cache[key]?.let { return it }
 
         if (name in unhandled || key in failed) return null
-        val names = splitFontFamilies(name)
+        val (names, italicName) = italicFamiliesOf(splitFontFamilies(name), families.keys)
         if (!handles(names)) {
             unhandled.add(name)
             return null
         }
 
+        val slanted = italic || italicName
         val typeface = runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) buildWithFallbacks(names, weight, italic, assets)
-            else buildLegacy(names, weight, italic)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) buildWithFallbacks(names, weight, slanted, assets)
+            else buildLegacy(names, weight, slanted)
         }.onFailure { log.e("Failed to build typeface for $name", it) }.getOrNull()
 
         if (typeface == null) {
