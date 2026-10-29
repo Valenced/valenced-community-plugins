@@ -1,47 +1,77 @@
+import { getModuleWithImportedPath } from '@valenced/discord/utils/modules/finders'
+import { after } from '@valenced/patcher'
+import { getErrorStack } from '@valenced/utils/error'
 import { cloneElement, isValidElement } from 'react'
+import SettingsComponent from './settings'
+import { DefaultSettings } from './shared'
 import type { ReactElement, ReactNode } from 'react'
-import type { HideCallButtonsStorage } from '../settings'
+import type { Settings } from './shared'
 
-/**
- * The rules that take a call or camera button out of what Discord rendered. Pure functions over
- * React elements, so they can be tested without Discord.
- *
- * Rules locate a control by its position in its own row, never by icon or asset id, and leave the
- * tree alone when its shape doesn't match. Every change is a copy: Discord's compiler reuses
- * rendered elements across renders, so editing one in place would apply the change again on every
- * render.
- */
-
-/** An accessibility action on a friends-list row, as `UserRow` builds it. */
-interface AccessibilityAction {
-	name?: unknown
-}
-
-/** The props this plugin reads or rewrites on the elements it walks. */
 interface NodeProps {
 	children?: ReactNode
 	onPress?: unknown
 	disabled?: unknown
-	accessibilityActions?: AccessibilityAction[]
+	accessibilityActions?: { name?: unknown }[]
 	trailing?: ReactNode
 }
 
 type Node = ReactElement<NodeProps>
+type Prune = (rendered: ReactNode, settings: Settings) => ReactNode
+type Render = (...args: unknown[]) => ReactNode
 
-/** Rewrites one patched component's rendered output. */
-export type Prune = (
-	rendered: ReactNode,
-	settings: HideCallButtonsStorage,
-) => ReactNode
+// Discord's compiler reuses rendered elements, so every change below is made on a copy
 
-/**
- * Any rendered element: an object with a `$$typeof` and a props object, as 1.3.6 checked.
- *
- * Not React's `isValidElement` alone. In React 19 that accepts only elements tagged
- * `react.transitional.element`, and an element Discord builds any other way (an older tag, a
- * precompiled or hand-built element) fails it. 1.3.7 used it, and the DM header's buttons stopped
- * hiding with no error at all, because every prune rule treats "not an element" as "leave it".
- */
+export default plugin<{ jsonStorage: Settings }>({
+	jsonStorage: {
+		load: true,
+		default: DefaultSettings,
+	},
+	start({ cleanup, jsonStorage, plugin }) {
+		const reported = new Set<string>()
+
+		for (const [path, label, prune] of Surfaces) {
+			cleanup(
+				getModuleWithImportedPath<{ default?: unknown }>(path, module => {
+					// React.memo components keep their render in .type
+					const component = module?.default
+					const [host, key] =
+						typeof component === 'object' &&
+						typeof (component as { type?: unknown } | null)?.type === 'function'
+							? [component, 'type']
+							: typeof component === 'function'
+								? [module, 'default']
+								: []
+					if (!host || !key) return
+
+					cleanup(
+						after(host as Record<string, Render>, key, rendered => {
+							try {
+								return prune(rendered, {
+									...DefaultSettings,
+									...jsonStorage.cache,
+								})
+							} catch (e) {
+								const message = `Failed to hide ${label} buttons: ${getErrorStack(e)}`
+								if (!reported.has(message)) {
+									reported.add(message)
+									plugin.reportError(message)
+								}
+								return rendered
+							}
+						}),
+					)
+				}),
+			)
+		}
+	},
+	// Unpatching can't undo what Discord already rendered
+	stop({ plugin }) {
+		plugin.requireReload()
+	},
+	SettingsComponent,
+})
+
+// isValidElement alone misses elements with an older $$typeof tag, like the DM header's
 function isNode(node: unknown): node is Node {
 	if (isValidElement<NodeProps>(node)) return true
 	const candidate = node as { $$typeof?: unknown; props?: unknown } | null
@@ -54,13 +84,13 @@ function isNode(node: unknown): node is Node {
 	)
 }
 
-function hasPress(node: Node): boolean {
+function hasPress(node: Node) {
 	return typeof node.props.onPress === 'function'
 }
 
-/** Address in a tree: each step indexes `props.children`, except `-1` = the single non-array child. */
+// Each step indexes props.children; -1 means a single non-array child
 function getAtPath(root: ReactNode, path: number[]): ReactNode {
-	let node: ReactNode = root
+	let node = root
 	for (const step of path) {
 		if (!isNode(node)) return undefined
 		const children = node.props.children
@@ -74,7 +104,6 @@ function getAtPath(root: ReactNode, path: number[]): ReactNode {
 	return node
 }
 
-/** A copy of [root] with the children at [path] replaced, cloning only the elements on the way. */
 function replaceChildren(
 	root: Node,
 	path: number[],
@@ -91,8 +120,7 @@ function replaceChildren(
 	return cloneElement(root, undefined, ...next)
 }
 
-/** Depth-first, document order: the path of every element carrying an `onPress`. */
-export function pressablePaths(root: ReactNode): number[][] {
+function pressablePaths(root: ReactNode): number[][] {
 	const found: number[][] = []
 	const visit = (node: ReactNode, path: number[], depth: number) => {
 		if (depth > 8 || !isNode(node)) return
@@ -115,17 +143,12 @@ export function pressablePaths(root: ReactNode): number[][] {
 	return found
 }
 
-/**
- * Drop a row's last action without leaving an empty wrapper: climb while the subtree still holds
- * only that one pressable. A three-button profile row loses the call button itself (keeping the
- * message icon); a two-button row loses its whole half-width call cell, so the row collapses.
- */
-function removeLastPressable(root: Node): Node | undefined {
+// Climb while the subtree holds only the last button, so a two-button row loses its whole cell
+function removeLastPressable(root: Node) {
 	const paths = pressablePaths(root)
-	if (paths.length < 2) return undefined
+	if (paths.length < 2) return
 	const target = paths[paths.length - 1]
 
-	// Subtree pressable counts only grow as the prefix shortens, so the first miss ends the walk.
 	let chosen = target
 	for (let len = target.length - 1; len >= 1; len--) {
 		const prefix = target.slice(0, len)
@@ -135,8 +158,7 @@ function removeLastPressable(root: Node): Node | undefined {
 
 	const path = chosen.slice(0, -1)
 	const container = getAtPath(root, path)
-	if (!isNode(container) || !Array.isArray(container.props.children))
-		return undefined
+	if (!isNode(container) || !Array.isArray(container.props.children)) return
 	const drop = chosen[chosen.length - 1]
 	const kept = (container.props.children as ReactNode[]).filter(
 		(_, i) => i !== drop,
@@ -144,7 +166,6 @@ function removeLastPressable(root: Node): Node | undefined {
 	return kept.length > 0 ? replaceChildren(root, path, kept) : undefined
 }
 
-/** Depth-first pass; `fn` rewrites each element, having already rewritten its children. */
 function mapElements(
 	node: ReactNode,
 	fn: (element: Node) => Node,
@@ -167,23 +188,16 @@ function mapElements(
 	return fn(next === children ? node : cloneElement(node, undefined, next))
 }
 
-/**
- * User profile -- `UserProfileContactButtons`: its whole output is the action row (message + call,
- * or add-friend + message + call) with the call always last. The profile draws no camera button.
- */
-export const pruneProfile: Prune = (root, st) => {
-	if (!st.upHideVoiceButton || !isNode(root)) return root
+// The call button is always last in the profile's action row
+const pruneProfile: Prune = (root, settings) => {
+	if (!settings.upHideVoiceButton || !isNode(root)) return root
 	return removeLastPressable(root) ?? root
 }
 
-/**
- * DM header -- `PrivateChannelButtons`. Discord gives the call and video pressables a `disabled`
- * prop and the search / overflow ones none, which separates the groups without reaching for an
- * icon. Call first, video second; the App DM header renders only labelled pressables.
- */
-export const pruneDM: Prune = (root, st) => {
-	if ((!st.dmHideCallButton && !st.dmHideVideoButton) || !isNode(root))
-		return root
+// Only the call and video buttons have a disabled prop, in that order
+const pruneDM: Prune = (root, settings) => {
+	const { dmHideCallButton, dmHideVideoButton } = settings
+	if ((!dmHideCallButton && !dmHideVideoButton) || !isNode(root)) return root
 	const children = root.props.children
 	if (!Array.isArray(children)) return root
 
@@ -191,20 +205,16 @@ export const pruneDM: Prune = (root, st) => {
 		isNode(child) && hasPress(child) && 'disabled' in child.props ? [i] : [],
 	)
 	const drop = new Set<number>()
-	if (st.dmHideCallButton && toggles.length > 0) drop.add(toggles[0])
-	if (st.dmHideVideoButton && toggles.length > 1) drop.add(toggles[1])
+	if (dmHideCallButton && toggles.length > 0) drop.add(toggles[0])
+	if (dmHideVideoButton && toggles.length > 1) drop.add(toggles[1])
 	if (drop.size === 0) return root
 	const kept = (children as ReactNode[]).filter((_, i) => !drop.has(i))
 	return kept.length > 0 ? cloneElement(root, undefined, ...kept) : root
 }
 
-/**
- * Friends list -- `UserRow`. `accessibilityActions` and the `trailing` buttons come from one
- * `useMemo`, so index `i` in one is index `i` in the other, and dropping `i` from both needs no
- * knowledge of what the button looks like. Drifted lists are skipped rather than misaligned.
- */
-export const pruneFriends: Prune = (root, st) => {
-	if (!st.friendsHideCallButton || !isNode(root)) return root
+// accessibilityActions and the trailing buttons line up index for index
+const pruneFriends: Prune = (root, settings) => {
+	if (!settings.friendsHideCallButton || !isNode(root)) return root
 	return mapElements(root, element => {
 		const actions = element.props.accessibilityActions
 		const trailing = element.props.trailing
@@ -232,6 +242,28 @@ export const pruneFriends: Prune = (root, st) => {
 	})
 }
 
-/** Voice channel -- `VoicePanelVideoButton`: the whole button goes. */
-export const pruneVoice: Prune = (root, st) =>
-	st.hideVCVideoButton ? null : root
+const pruneVoice: Prune = (root, settings) =>
+	settings.hideVCVideoButton ? null : root
+
+const Surfaces: [path: string, label: string, prune: Prune][] = [
+	[
+		'modules/user_profile/native/UserProfileContactButtons.tsx',
+		'profile',
+		pruneProfile,
+	],
+	[
+		'modules/main_tabs_v2/native/channel/header/PrivateChannelButtons.tsx',
+		'DM header',
+		pruneDM,
+	],
+	[
+		'modules/main_tabs_v2/native/shared_components/user_list/UserRow.tsx',
+		'friends list',
+		pruneFriends,
+	],
+	[
+		'modules/voice_panel/native/controls/buttons/VoicePanelVideoButton.tsx',
+		'voice channel',
+		pruneVoice,
+	],
+]
