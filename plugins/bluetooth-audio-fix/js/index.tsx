@@ -6,10 +6,11 @@ import { ReactNative } from '@valenced/react'
 import { noop } from '@valenced/utils/callback'
 
 const { AlertActionButton, AlertModal } = Design
+const { Platform } = ReactNative
 
 export default plugin({
 	start({ cleanup, jsonStorage, plugin }) {
-		if (ReactNative.Platform.OS !== 'android') {
+		if (Platform.OS !== 'android') {
 			AlertActionCreators.openAlert(
 				'mxtiy.audiofix.unsupported-platform',
 				<AlertModal
@@ -25,7 +26,7 @@ export default plugin({
 			plugin.requireReload()
 			return
 		}
-		
+
 		const audioManager = getNativeModule('NativeAudioManagerModule') ?? getNativeModule('RTNAudioManager')
 		if (!audioManager) {
 			plugin.reportError("AudioManager module not found")
