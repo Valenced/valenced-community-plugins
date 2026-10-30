@@ -19,6 +19,7 @@ export default plugin({
 					actions={<AlertActionButton variant="primary" text="Got it" />}
 				/>,
 			)
+			plugin.disable()
 			return
 		}
 
