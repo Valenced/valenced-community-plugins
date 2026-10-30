@@ -114,6 +114,30 @@
         }
       }
     },
+    "dev.loki-vtx.selectablebios": {
+      "name": "Selectable Bios",
+      "description": "Makes profile 'About Me' text selectable, allowing you to copy and share it.",
+      "author": "Loki-vtx <918437723755384832> (https://github.com/Loki-vtx \"GitHub\")",
+      "icon": "PencilIcon",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://community.valenced.app/pool/dev.loki-vtx.selectablebios@1.0.0.zip",
+          "sha256": "0d16a2bc7050733f78d82f8d1b493fc16e931e9cdee5a0709725e85377d2b413",
+          "size": 896,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    },
     "k1ngop.anonymous-file-names": {
       "name": "Anonymous File Names",
       "description": "Randomizes file names before you upload them.",
