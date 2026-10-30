@@ -1,0 +1,49 @@
+{
+	"format": 1,
+	"id": "thororen.character-counter",
+	"name": "Character Counter",
+	"description": "Adds a character counter to the chat input.",
+	"author": {
+		"name": "thororen",
+		"id": "848339671629299742",
+		"links": [
+			{
+				"title": "GitHub",
+				"url": "https://github.com/thororen1234"
+			},
+			{
+				"title": "Website",
+				"url": "https://www.thororen.com"
+			}
+		]
+	},
+	"contributors": [
+		{
+			"name": "creations",
+			"id": "209830981060788225",
+			"links": [
+				{
+					"title": "GitHub",
+					"url": "https://github.com/creationsss"
+				},
+				{
+					"title": "Website",
+					"url": "https://creations.works"
+				}
+			]
+		}
+	],
+	"icon": "LettersIcon",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
