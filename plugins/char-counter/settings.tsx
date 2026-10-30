@@ -2,15 +2,7 @@ import Page from '@valenced/components/Page'
 import TableRowAssetIcon from '@valenced/components/TableRowAssetIcon'
 import { Design } from '@valenced/discord/design'
 import { ScrollView, View } from 'react-native'
-import {
-	CounterSquare,
-	clamp,
-	DefaultSettings,
-	FontSize,
-	SplitDelay,
-	SplitMax,
-} from './shared'
-import { delaySeconds, maxParts } from './split'
+import { CounterSquare, clamp, DefaultSettings, FontSize } from './shared'
 import type { PluginSettingsComponent } from '@valenced/plugins/types'
 import type { ComponentProps, ReactNode } from 'react'
 import type { Settings } from './shared'
@@ -125,50 +117,6 @@ export default function SettingsComponent({
 							value={!!s.onlyNearLimit}
 							onValueChange={onlyNearLimit => storage.set({ onlyNearLimit })}
 						/>
-					</TableRowGroup>
-
-					<TableRowGroup title="Long messages" hasIcons>
-						<TableSwitchRow
-							label="Split long messages"
-							subLabel="Past the limit, the message goes out as several, cut at a blank line, a line break or the end of a sentence. Code blocks are closed and reopened."
-							icon={<TableRowAssetIcon name="ChatIcon" />}
-							value={!!s.split}
-							onValueChange={split => storage.set({ split })}
-						/>
-						{s.split ? (
-							<SliderRow
-								label={`Wait between messages — ${delaySeconds(s)} s`}
-								description="So the parts arrive in order and read as one. A channel's slowmode wins when it's longer."
-							>
-								<Slider
-									step={SplitDelay.step}
-									value={delaySeconds(s)}
-									minimumValue={SplitDelay.min}
-									maximumValue={SplitDelay.max}
-									onValueChange={value =>
-										storage.set({
-											splitDelaySec: clamp(value, SplitDelay),
-										})
-									}
-								/>
-							</SliderRow>
-						) : null}
-						{s.split ? (
-							<SliderRow
-								label={`At most — ${maxParts(s)} messages`}
-								description="Anything longer is sent as typed, and Discord says it's too long."
-							>
-								<Slider
-									step={1}
-									value={maxParts(s)}
-									minimumValue={SplitMax.min}
-									maximumValue={SplitMax.max}
-									onValueChange={value =>
-										storage.set({ splitMax: Math.round(value) })
-									}
-								/>
-							</SliderRow>
-						) : null}
 					</TableRowGroup>
 				</Stack>
 			</ScrollView>

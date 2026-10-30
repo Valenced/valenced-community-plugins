@@ -2,7 +2,7 @@
 	"format": 1,
 	"id": "bleelblep.char-counter",
 	"name": "Character Counter",
-	"description": "Counts your message's characters in a square above the message box, and splits long ones into several.",
+	"description": "Counts your message's characters in a square above the message box.",
 	"author": "bleelblep <119043674385547264>",
 	"icon": "TextIcon",
 	"version": "1.0.0",

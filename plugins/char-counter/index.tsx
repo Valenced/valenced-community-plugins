@@ -1,5 +1,8 @@
 import { getModules } from '@valenced/modules/finders'
-import { createFilterGenerator } from '@valenced/modules/finders/filters'
+import {
+	createFilterGenerator,
+	withProps,
+} from '@valenced/modules/finders/filters'
 import { after, instead } from '@valenced/patcher'
 import { getErrorStack } from '@valenced/utils/error'
 import { findInReactFiber } from '@valenced/utils/react'
@@ -13,7 +16,6 @@ import {
 import { StyleSheet, View } from 'react-native'
 import SettingsComponent from './settings'
 import { CounterSquare, clamp, DefaultSettings, FontSize } from './shared'
-import { estimateParts, limit, maxParts, patchSplit } from './split'
 import type {
 	Filter,
 	FilterGenerator,
@@ -45,9 +47,21 @@ interface FillProps {
 	style?: StyleProp<ViewStyle>
 }
 
+interface MaxLength {
+	getMaxMessageLength(): number
+}
+
 const TypingLineHeight = 26
 
 let settings: Settings = DefaultSettings
+
+let maxLength: (() => number) | undefined
+
+// Nitro raises the limit, so Discord's own check is read rather than assuming 2,000
+function limit(): number {
+	const value = maxLength?.()
+	return typeof value === 'number' && value > 0 ? value : 2000
+}
 
 let length = 0
 const listeners = new Set<() => void>()
@@ -151,9 +165,23 @@ export default plugin<{ jsonStorage: Settings }>({
 					}),
 				)
 			}),
-		)
+			getModules(
+				withProps<MaxLength & { default?: MaxLength }>('getMaxMessageLength'),
+				exports => {
+					const host =
+						typeof exports.getMaxMessageLength === 'function'
+							? exports
+							: exports.default
+					if (typeof host?.getMaxMessageLength !== 'function')
+						return report('getMaxMessageLength not found')
 
-		patchSplit(cleanup, () => settings, report)
+					maxLength = host.getMaxMessageLength.bind(host)
+					cleanup(() => {
+						maxLength = undefined
+					})
+				},
+			),
+		)
 	},
 	SettingsComponent,
 })
@@ -173,10 +201,6 @@ function Badge({ typing }: { typing: boolean }) {
 	if (length <= 0 || (s.onlyNearLimit && !near)) return null
 
 	const over = length > max
-	const parts =
-		over && s.split && estimateParts(length, max) <= maxParts(s)
-			? estimateParts(length, max)
-			: 0
 
 	return (
 		<View
@@ -189,9 +213,9 @@ function Badge({ typing }: { typing: boolean }) {
 			}}
 		>
 			<CounterSquare
-				text={label(length, max, s.show, parts)}
+				text={label(length, max, s.show)}
 				color={
-					over && !parts
+					over
 						? 'text-feedback-critical'
 						: near
 							? 'text-feedback-warning'
@@ -208,16 +232,8 @@ const grouped = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 const characters = (n: number) =>
 	`${grouped(n)} ${n === 1 ? 'character' : 'characters'}`
 
-function label(
-	length: number,
-	max: number,
-	show: Settings['show'],
-	parts: number,
-) {
-	if (length > max)
-		return parts
-			? `${parts} messages`
-			: `${characters(length - max)} over the limit`
+function label(length: number, max: number, show: Settings['show']) {
+	if (length > max) return `${characters(length - max)} over the limit`
 	if (show === 'left') return `${characters(max - length)} left`
 	if (show === 'limit') return `${grouped(length)} / ${characters(max)}`
 	return characters(length)

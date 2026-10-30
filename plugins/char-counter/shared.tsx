@@ -8,9 +8,6 @@ export interface Settings {
 	side: 'left' | 'right'
 	onlyNearLimit: boolean
 	fontSize: number
-	split: boolean
-	splitDelaySec: number
-	splitMax: number
 }
 
 interface Range {
@@ -21,17 +18,12 @@ interface Range {
 }
 
 export const FontSize = { min: 10, max: 20, default: 12 }
-export const SplitDelay = { min: 0, max: 10, step: 0.5, default: 1 }
-export const SplitMax = { min: 2, max: 10, default: 5 }
 
 export const DefaultSettings: Settings = {
 	show: 'count',
 	side: 'left',
 	onlyNearLimit: false,
 	fontSize: FontSize.default,
-	split: true,
-	splitDelaySec: SplitDelay.default,
-	splitMax: SplitMax.default,
 }
 
 export function clamp(value: unknown, range: Range): number {
