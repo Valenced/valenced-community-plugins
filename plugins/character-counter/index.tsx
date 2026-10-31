@@ -70,13 +70,15 @@ function CharacterCounter({ ref, style }: CounterProps) {
 		)[0]?.getMaxMessageLength() ?? 2000
 
 	return (
-		<View style={[style, styles.container]} pointerEvents="none">
-			<Text
-				variant="text-xxs/semibold"
-				color={colorEffects ? getColor(length / max) : 'text-muted'}
-			>
-				{length}/{max}
-			</Text>
+		<View style={style} pointerEvents="none">
+			<View style={styles.container}>
+				<Text
+					variant="text-xxs/semibold"
+					color={colorEffects ? getColor(length / max) : 'text-muted'}
+				>
+					{length}/{max}
+				</Text>
+			</View>
 		</View>
 	)
 }
@@ -90,7 +92,7 @@ function getColor(ratio: number) {
 const styles = StyleSheet.create({
 	container: {
 		paddingHorizontal: 4,
-		marginRight: 48,
+		transform: [{ translateX: 1 }, { translateY: -11 }],
 	},
 })
 
