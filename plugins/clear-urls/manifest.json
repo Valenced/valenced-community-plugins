@@ -1,8 +1,8 @@
 {
 	"format": 1,
 	"id": "hakuxyz.clear-urls",
-	"name": "ClearURLs",
-	"description": "Strips tracking parameters (utm_*, fbclid, gclid, igshid, ...) from URLs you copy, edit, or send.",
+	"name": "Clear URLs",
+	"description": "Strips tracking parameters from URLs you view, send, or edit.",
 	"author": "hakuxyz (https://github.com/hakuxyz \"GitHub\")",
 	"contributors": [
 		"nexpid <853550207039832084> (https://github.com/nexpid \"GitHub\")"
