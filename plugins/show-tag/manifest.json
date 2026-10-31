@@ -2,7 +2,7 @@
 	"format": 1,
 	"id": "bleelblep.show-tag",
 	"name": "Show Tag",
-	"description": "Shows usernames next to display names in chat, including in replies.",
+	"description": "Show usernames next to display names in chat, including in replies.",
 	"author": "bleelblep <119043674385547264>",
 	"contributors": [
 		"Cynosphere <150745989836308480> (https://github.com/Cynosphere \"GitHub\")"
