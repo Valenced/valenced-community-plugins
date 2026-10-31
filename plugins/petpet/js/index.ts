@@ -10,7 +10,7 @@ let UserStore: any;
 let unregister: (() => void) | undefined;
 
 type ApplicationCommand = any;
-type CommandLib = {
+type CommandsLib = {
   commands: { registerCommand: (cmd: ApplicationCommand) => () => void }
 };
 
@@ -114,7 +114,7 @@ async function sendPetPetAttachment(
 
 export default plugin({
 	start(api) {
-		const { registerCommand } = (api.unscoped.commandlib as CommandLib).commands
+		const { registerCommand } = (api.commands as CommandsLib).commands
 
 		getModules(withProps('getToken'), exports => {
 			token = exports

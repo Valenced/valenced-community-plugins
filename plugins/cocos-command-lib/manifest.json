@@ -7,7 +7,7 @@
 	"contributors": [
 		"kmmiio99o <879393496627306587> (https://github.com/kmmiio99o \"GitHub\")"
 	],
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"icon": "AppsIcon",
 	"dependencies": {
 		"valenced.api": {

@@ -40,6 +40,11 @@ export function patchCommands() {
 	})
 }
 
+export function unpatchCommands() {
+	for (const unpatch of patches) unpatch()
+	patches.clear()
+};
+
 export function registerCommand(command: ApplicationCommand): () => void {
 	const unsubscribe = getModules(
 		withProps('getBuiltInCommands'),

@@ -1,10 +1,10 @@
 import * as commands from './commands'
-import { patchCommands } from './commands'
+import { patchCommands, unpatchCommands } from './commands'
 import * as modules from './modules'
 import * as types from './types'
 import Settings from './ui/Settings'
 
-const commandLib = {
+const commandsLib = {
 	types,
 	modules,
 	commands,
@@ -12,19 +12,22 @@ const commandLib = {
 
 export default plugin({
 	start({ decorate }) {
-		patchCommands()
+		patchCommands();
 
 		decorate(plugin => {
-			plugin.api.unscoped.commandlib = commandLib
+			plugin.api.commands = commandsLib
 		})
+	},
+	stop() {
+		unpatchCommands();
 	},
 	SettingsComponent: Settings,
 })
 
-export type CommandLibApi = typeof commandLib
+export type CommandsLibApi = typeof commandsLib
 
 declare module '@valenced/plugins/types' {
-	interface UnscopedPluginApi {
-		commandlib: CommandLibApi
+	interface PluginApi {
+		commands: CommandsLibApi
 	}
 }
