@@ -241,6 +241,30 @@
         }
       }
     },
+    "k1ngop.valid-user": {
+      "name": "ValidUser",
+      "description": "Resolves @unknown-user mentions to a normal clickable mention.",
+      "author": "k1ng_op <641266820187160576> (https://github.com/k1ng0p \"GitHub\")",
+      "icon": "AtIcon",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://community.valenced.app/pool/k1ngop.valid-user@1.0.0.zip",
+          "sha256": "1a0effc927caf111bc08aa8f1063de7be632de5d8c61951d5029bebea3e349c3",
+          "size": 1687,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    },
     "mxtiy.audiofix": {
       "name": "Bluetooth Audio Fix",
       "description": "Prevents Discord from switching to hands-free mode during calls.",
