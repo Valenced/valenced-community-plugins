@@ -1,0 +1,20 @@
+{
+	"format": 1,
+	"id": "dev.benjii.quoter",
+	"name": "Quoter",
+	"description": "Create quote images from messages.",
+	"author": "Benjii <463702169443368970>",
+	"icon": "QuoteIcon",
+	"version": "1.0.2",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
