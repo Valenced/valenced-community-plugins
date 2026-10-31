@@ -748,6 +748,34 @@
         }
       }
     },
+    "theunrealzaka.favorite-anything": {
+      "name": "Favorite Anything",
+      "description": "Favorite any image or video, not just GIFs, and keep saved favorites loading.",
+      "author": "TheUnrealZaka <1268335382118924406> (https://www.theunrealzaka.me \"Website\")",
+      "contributors": [
+        "nin0dev",
+        "davri"
+      ],
+      "icon": "StarIcon",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://community.valenced.app/pool/theunrealzaka.favorite-anything@1.0.0.zip",
+          "sha256": "dcc3dfa22dc17b14d5bc7506d04c04f89c54b642decc62ed01c135c4a1054691",
+          "size": 3031,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    },
     "thororen.character-counter": {
       "name": "Character Counter",
       "description": "Adds a character counter to the chat input.",
