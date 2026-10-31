@@ -1,0 +1,21 @@
+{
+	"format": 1,
+	"id": "dev.benjii.declutter",
+	"name": "Declutter",
+	"description": "Hide profile and channel clutter, and customize settings and long-press actions.",
+	"author": "Benjii <463702169443368970>",
+	"contributors": ["kmmiio99o"],
+	"icon": "MagicWandIcon",
+	"version": "1.0.1",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
