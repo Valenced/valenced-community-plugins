@@ -5,7 +5,7 @@ import { Stores } from '@valenced/discord/flux'
 import { getModules } from '@valenced/modules/finders'
 import { withName, withProps } from '@valenced/modules/finders/filters'
 import { after, before, instead } from '@valenced/patcher'
-import { isValidElement } from 'react'
+import { cloneElement, isValidElement } from 'react'
 import SettingsComponent, { promptOverride } from './settings'
 import {
 	badgeColor,
@@ -210,20 +210,26 @@ function findMessage(node: ReactNode, depth = 0): Message | undefined {
 		: findMessage(props.children, depth + 1)
 }
 
-function findGroupParent(
+// Copies the path down to the sheet's row groups rather than editing Discord's tree
+function withSheetRow(
 	node: ReactNode,
+	row: ReactElement,
 	inSheet = false,
 	depth = 0,
-): Element | undefined {
-	if (!node || depth > 40) return undefined
+): ReactNode {
+	if (!node || depth > 40) return node
 	if (Array.isArray(node)) {
-		for (const child of node) {
-			const found = findGroupParent(child, inSheet, depth + 1)
-			if (found) return found
+		for (let i = 0; i < node.length; i++) {
+			const next = withSheetRow(node[i], row, inSheet, depth + 1)
+			if (next !== node[i]) {
+				const copy = [...node]
+				copy[i] = next
+				return copy
+			}
 		}
-		return undefined
+		return node
 	}
-	if (!isValidElement(node)) return undefined
+	if (!isValidElement(node)) return node
 	const element = node as Element
 	const inside = inSheet || element.type === Design.ActionSheet
 	const { children } = element.props
@@ -235,18 +241,14 @@ function findGroupParent(
 				isValidElement(child) && child.type === Design.ActionSheetRow.Group,
 		)
 	)
-		return element
-	return findGroupParent(children, inside, depth + 1)
+		return cloneElement(element, { children: [row, ...groups] })
+	const next = withSheetRow(children, row, inside, depth + 1)
+	return next === children ? element : cloneElement(element, { children: next })
 }
 
 function addSheetRows(rendered: ReactNode, message: Message | undefined) {
-	if (!message?.author?.id) return
-	const parent = findGroupParent(rendered)
-	if (!parent) return
-	const row = <SheetRow message={message} />
-	const { children } = parent.props
-	if (Array.isArray(children)) children.unshift(row)
-	else parent.props.children = [row, children]
+	if (!message?.author?.id) return rendered
+	return withSheetRow(rendered, <SheetRow message={message} />)
 }
 
 export default plugin<{ jsonStorage: Settings }>({
@@ -333,16 +335,17 @@ export default plugin<{ jsonStorage: Settings }>({
 					return args
 				}),
 				after(mod, 'default', rendered => {
+					const sheetMessage = message
+					message = undefined
 					try {
 						if (rendered != null)
-							addSheetRows(
+							return addSheetRows(
 								rendered,
-								message?.author ? message : findMessage(rendered),
+								sheetMessage?.author ? sheetMessage : findMessage(rendered),
 							)
 					} catch (error) {
 						reportError('sheet injection failed', error)
 					}
-					message = undefined
 					return rendered
 				}),
 			)
