@@ -70,7 +70,7 @@ function CharacterCounter({ ref, style }: CounterProps) {
 		)[0]?.getMaxMessageLength() ?? 2000
 
 	return (
-		<View style={[styles.container, style]} pointerEvents="none">
+		<View style={[style, styles.container]} pointerEvents="none">
 			<Text
 				variant="text-xxs/semibold"
 				color={colorEffects ? getColor(length / max) : 'text-muted'}
@@ -90,6 +90,7 @@ function getColor(ratio: number) {
 const styles = StyleSheet.create({
 	container: {
 		paddingHorizontal: 4,
+		marginRight: 48,
 	},
 })
 
