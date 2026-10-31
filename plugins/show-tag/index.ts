@@ -47,15 +47,15 @@ export default plugin<{ jsonStorage: Settings }>({
 			return
 		}
 
-		const UserStore = Stores.UserStore as DiscordModules.Flux.Store<{
-			getUser(id: string): User | undefined
-		}>
-
-		const rename = (message: RowMessage) => {
+		// Returns a renamed copy, or the same message when there is nothing to change
+		const rename = (message: RowMessage): RowMessage => {
+			const UserStore = Stores.UserStore as DiscordModules.Flux.Store<{
+				getUser(id: string): User | undefined
+			}>
 			const user = message.authorId && UserStore.getUser(message.authorId)
 			// Webhooks have no real username to show
-			if (!user || (user.bot && user.discriminator === '0000')) return
-			if (message.username == null) return
+			if (!user || (user.bot && user.discriminator === '0000')) return message
+			if (message.username == null) return message
 
 			// Reply previews can start with "@"
 			const at = message.username.startsWith('@') ? '@' : ''
@@ -63,7 +63,10 @@ export default plugin<{ jsonStorage: Settings }>({
 			const onlyUsername =
 				jsonStorage.cache?.onlyUsername ?? DefaultSettings.onlyUsername
 
-			message.username = at + formatName(shown, user, onlyUsername)
+			return {
+				...message,
+				username: at + formatName(shown, user, onlyUsername),
+			}
 		}
 
 		cleanup(
@@ -71,19 +74,26 @@ export default plugin<{ jsonStorage: Settings }>({
 			getModules(withName<RowManager>('RowManager'), ({ prototype }) => {
 				cleanup(
 					after(prototype, 'generate', row => {
-						const message = row?.type === MessageRowType ? row.message : null
-						if (!message) return row
+						if (row?.type !== MessageRowType || !row.message) return row
 
 						try {
-							rename(message)
+							let message = rename(row.message)
 
-							const reply = message.referencedMessage?.message
-							if (reply) rename(reply)
+							const referenced = message.referencedMessage
+							if (referenced?.message) {
+								const reply = rename(referenced.message)
+								if (reply !== referenced.message)
+									message = {
+										...message,
+										referencedMessage: { ...referenced, message: reply },
+									}
+							}
+
+							return message === row.message ? row : { ...row, message }
 						} catch (e) {
 							plugin.reportError(`Failed to add usernames: ${getErrorStack(e)}`)
+							return row
 						}
-
-						return row
 					}),
 				)
 			}),
