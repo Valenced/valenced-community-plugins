@@ -93,13 +93,26 @@
       ],
       "icon": "AppsIcon",
       "channels": {
-        "latest": "1.0.0"
+        "latest": "2.0.0"
       },
       "versions": {
         "1.0.0": {
           "url": "https://community.valenced.app/pool/dev.cocobo1.command-lib@1.0.0.zip",
           "sha256": "d28ac1b2cfa03b628624075e0a7ca02b97699c8384188d1c956856eecdd852c0",
           "size": 2875,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
+        "2.0.0": {
+          "url": "https://community.valenced.app/pool/dev.cocobo1.command-lib@2.0.0.zip",
+          "sha256": "90bcadc76fa4e38257d688868875fd3ab3054c2857069735b2455c62c29a23f8",
+          "size": 2900,
           "dependencies": {
             "valenced.api": {
               "version": ">=1 <2"
@@ -120,7 +133,7 @@
       ],
       "icon": "EmojiSmilingFaceWithHeartsIcon",
       "channels": {
-        "latest": "1.0.0"
+        "latest": "1.0.1"
       },
       "versions": {
         "1.0.0": {
@@ -136,6 +149,22 @@
             },
             "dev.cocobo1.command-lib": {
               "version": ">=1 <2"
+            }
+          }
+        },
+        "1.0.1": {
+          "url": "https://community.valenced.app/pool/dev.cocobo1.petpet@1.0.1.zip",
+          "sha256": "ef013cebc8fee363b4cd7be793757c593919db05d4eb80b36547fcf0a2838296",
+          "size": 1908,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            },
+            "dev.cocobo1.command-lib": {
+              "version": ">=2 <3"
             }
           }
         }
