@@ -255,6 +255,11 @@ export default plugin<{ jsonStorage: Settings }>({
 		default: DefaultSettings,
 	},
 	start({ cleanup, jsonStorage, plugin }) {
+		if (plugin.startedLate) {
+			plugin.requireReload()
+			return
+		}
+
 		setReporter(plugin)
 		setStorage(jsonStorage)
 		cleanup(

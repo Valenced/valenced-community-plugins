@@ -11,10 +11,8 @@ export interface Settings {
 	pronounDbEnabled: boolean
 	validOnly: boolean
 	allowAnyAll: boolean
-	extraPronouns: string
 	badgeColor: string
 	overrides: Record<string, string | null>
-	settingsVersion?: number
 }
 
 export const DefaultSettings: Settings = {
@@ -23,13 +21,9 @@ export const DefaultSettings: Settings = {
 	pronounDbEnabled: true,
 	validOnly: true,
 	allowAnyAll: true,
-	extraPronouns: '',
 	badgeColor: '',
 	overrides: {},
 }
-
-// 2: "Only real pronouns" turned on for existing users once
-const SETTINGS_VERSION = 2
 
 type Stored = Partial<Settings>
 
@@ -37,7 +31,6 @@ type Stored = Partial<Settings>
 let storage: JsonStorage<Settings> | undefined
 let unsubscribe: (() => void) | undefined
 let loaded = false
-let migrated = false
 let mirror: Settings = { ...DefaultSettings }
 const listeners = new Set<() => void>()
 
@@ -61,19 +54,11 @@ function merge(base: Settings, value: Stored | undefined): Settings {
 	return { ...base, ...value, overrides: withoutNulls(overrides) }
 }
 
-function migrate(raw: Stored | undefined) {
-	if (migrated || !raw) return
-	migrated = true
-	if ((raw.settingsVersion ?? 1) < SETTINGS_VERSION)
-		update({ validOnly: true, settingsVersion: SETTINGS_VERSION })
-}
-
 export function setStorage(handle: JsonStorage<Settings> | undefined) {
 	unsubscribe?.()
 	unsubscribe = undefined
 	storage = handle
 	loaded = false
-	migrated = false
 	mirror = { ...DefaultSettings }
 	if (!handle) return
 
@@ -81,14 +66,12 @@ export function setStorage(handle: JsonStorage<Settings> | undefined) {
 	if (cache) {
 		mirror = merge(DefaultSettings, cache)
 		loaded = true
-		migrate(cache)
 	}
 	unsubscribe = handle.subscribe((patch, mode) => {
 		const merging = mode === JsonStorageUpdateMode.Merge
 		mirror = merge(merging ? mirror : DefaultSettings, patch as Stored)
 		loaded = true
 		notify()
-		if (!merging) migrate(patch as Stored)
 	})
 	handle
 		.get()
@@ -96,7 +79,6 @@ export function setStorage(handle: JsonStorage<Settings> | undefined) {
 			if (value) mirror = merge(DefaultSettings, value)
 			loaded = true
 			notify()
-			migrate(value)
 		})
 		.catch(() => {})
 }

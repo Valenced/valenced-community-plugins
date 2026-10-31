@@ -18,17 +18,7 @@ const FAMILIES = [
 	'ki kin kis kinself',
 	'sie hir hirs',
 	'shi hir hirs hiz',
-	'star stars starself',
-	'bun buns bunself',
 	'vae vaer vaers vaerself',
-	'mew mews mewself',
-	'pup pups pupself',
-	'nya nyan nyanself',
-	'void voids voidself',
-	'kit kits kitself',
-	'bee bees beeself',
-	'fox foxes foxself',
-	'cat cats catself',
 	'lu lum lus luself',
 	'yo yos yoself',
 	'te tem ter temself',
@@ -41,8 +31,7 @@ const FAMILIES = [
 const AMBIGUOUS = new Set(
 	(
 		"his her their it its one one's e em ems ey ve ver vis vir ne nym per pers thon thons ae co " +
-		'cos hu hum hus ki kin kis sie shi hiz zes zem zim star stars bun buns vae mew mews pup ' +
-		'pups nya nyan void voids kit kits bee bees fox foxes cat cats lu lum lus yo yos te tem ter ' +
+		'cos hu hum hus ki kin kis sie shi hiz zes zem zim vae lu lum lus yo yos te tem ter ' +
 		'di dem dir ya yam ix ixs xir nir aer'
 	).split(' '),
 )
@@ -57,7 +46,6 @@ const WORD = /[\p{L}']+/gu
 
 export interface ValidateOptions {
 	anyAll: boolean
-	extra: string[]
 }
 
 const familyOf = new Map<string, Set<number>>()
@@ -69,28 +57,14 @@ FAMILIES.forEach((family, index) => {
 	}
 })
 
-interface Lexicon {
-	known: Set<string>
-	distinct: (word: string) => boolean
+const KNOWN = new Set<string>([...familyOf.keys(), ...ANY_ALL])
+
+function known(word: string, options: ValidateOptions) {
+	return KNOWN.has(word) && (options.anyAll || !ANY_ALL.includes(word))
 }
 
-let cachedKey = ''
-let cachedLexicon: Lexicon | undefined
-
-function lexicon(options: ValidateOptions): Lexicon {
-	const key = `${options.anyAll}|${options.extra.join(',')}`
-	if (key !== cachedKey || !cachedLexicon) {
-		const extra = new Set(options.extra)
-		const known = new Set<string>([...familyOf.keys(), ...extra])
-		if (options.anyAll) for (const word of ANY_ALL) known.add(word)
-		cachedKey = key
-		cachedLexicon = {
-			known,
-			distinct: word =>
-				extra.has(word) || (known.has(word) && !AMBIGUOUS.has(word)),
-		}
-	}
-	return cachedLexicon
+function distinct(word: string) {
+	return familyOf.has(word) && !AMBIGUOUS.has(word)
 }
 
 function standard(word: string): boolean {
@@ -123,7 +97,6 @@ export function cleanPronouns(
 	text: string,
 	options: ValidateOptions,
 ): string | undefined {
-	const { known, distinct } = lexicon(options)
 	const sets: string[] = []
 	for (const part of String(text ?? '')
 		.replace(SLASHES, '/')
@@ -149,7 +122,7 @@ export function cleanPronouns(
 				continue
 			}
 			if (!options.anyAll && ANY_ALL.includes(word)) continue
-			if (!known.has(word)) {
+			if (!known(word, options)) {
 				prose = true
 				flush()
 				continue
@@ -208,14 +181,4 @@ export function cleanPronounDb(
 		.filter(code => code && !PRONOUNDB_NOT_PRONOUNS.has(code.toLowerCase()))
 		.filter(code => options.anyAll || !ANY_ALL.includes(code.toLowerCase()))
 	return kept.length ? kept.join('/') : undefined
-}
-
-export function parseExtra(text: string): string[] {
-	return [
-		...new Set(
-			(text.toLowerCase().match(WORD) ?? [])
-				.map(word => word.replace(/^'+|'+$/g, ''))
-				.filter(Boolean),
-		),
-	]
 }

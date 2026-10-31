@@ -2,7 +2,6 @@ import Page from '@valenced/components/Page'
 import TableRowAssetIcon from '@valenced/components/TableRowAssetIcon'
 import { AlertActionCreators } from '@valenced/discord/actions'
 import { Design } from '@valenced/discord/design'
-import { useState } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 import {
 	badgeColor,
@@ -145,7 +144,6 @@ function Swatches() {
 export default function SettingsComponent() {
 	const { Stack, TableRowGroup, TableRow, TableSwitchRow } = Design
 	const s = useSettings()
-	const [extra, setExtra] = useState(s.extraPronouns)
 	const overrides = Object.entries(s.overrides).filter(
 		(entry): entry is [string, string] => typeof entry[1] === 'string',
 	)
@@ -198,23 +196,6 @@ export default function SettingsComponent() {
 							/>
 						)}
 					</TableRowGroup>
-					{s.validOnly && (
-						<Field
-							label="Also allow"
-							description="Extra pronoun words to accept, separated by spaces or slashes."
-						>
-							<Input
-								placeholder="moth/moths star"
-								value={extra}
-								autoCapitalize="none"
-								autoCorrect={false}
-								onChange={(text: string) => {
-									setExtra(text)
-									update({ extraPronouns: text })
-								}}
-							/>
-						</Field>
-					)}
 					<Field
 						label="Badge colour"
 						description="Tap a colour again to go back to Discord's own."
