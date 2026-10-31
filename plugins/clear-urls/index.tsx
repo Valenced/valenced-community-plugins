@@ -8,6 +8,11 @@ import { DefaultSettings } from './shared'
 import type { JsonStorage } from '@valenced/json-storage'
 import type { Settings } from './shared'
 
+interface MessagesModule {
+	sendMessage: (...args: unknown[]) => unknown
+	editMessage: (...args: unknown[]) => unknown
+}
+
 // Tracking parameter patterns from ClearURLs Rules (globalRules + referralMarketing)
 // Source: https://gitlab.com/ClearURLs/rules/-/blob/master/data.min.json
 const TRACKING_PARAMS = [
@@ -67,7 +72,6 @@ const TRACKING_RE = new RegExp(`([?&])(${TRACKING_PARAMS.join('|')})=[^&]*&?`, '
 const TRAILING_QS = /[?&]$/
 
 function cleanUrl(text: string) {
-	if (typeof text !== 'string' || !text.includes('http')) return text
 	return text
 		.replace(TRACKING_RE, '$1')
 		.replace(/([?&])+/g, '$1')
@@ -108,9 +112,9 @@ export default plugin<{ jsonStorage: Settings }>({
 
 		cleanup(
 			getModules(
-				withName<{ sendMessage: (...args: unknown[]) => unknown; editMessage: (...args: unknown[]) => unknown }>('Messages'),
+				withName<MessagesModule>('Messages'),
 				mod => {
-					const module = mod as { default: { sendMessage: (...args: unknown[]) => unknown; editMessage: (...args: unknown[]) => unknown } }
+					const module = mod as { default: MessagesModule }
 					cleanup(
 						instead(module.default, 'sendMessage', (args, orig) => {
 							if (jsonStorage.cache?.enabled && jsonStorage.cache?.cleanOnCopy && typeof args[1] === 'string')
