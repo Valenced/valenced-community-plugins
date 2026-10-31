@@ -1,14 +1,14 @@
-# FavouriteAnything
+# Favorite Anything
 
-A [Valenced](https://github.com/Valenced) (Discord Mobile) plugin that lets you favourite **any** image or video, not just GIFs!
+A [Valenced](https://github.com/Valenced) (Discord Mobile) plugin that lets you favorite **any** image or video, not just GIFs!
 
 Ported from the [Equicord](https://github.com/Equicord/Equicord) desktop plugin by [nin0dev](https://github.com/nin0dev) & [davri](https://github.com/davri).
 
 ## What does it do?
 
-Discord only shows the favourite button on GIFs in the media viewer. This plugin patches `GIFFavButton` to appear on **all media types** (images, videos), so you can save anything to your GIF favourites.
+Discord only shows the favorite button on GIFs in the media viewer. This plugin patches `GIFFavButton` to appear on **all media types** (images, videos), so you can save anything to your GIF favorites.
 
-It also renews the expired signed Discord CDN links of your saved favourites, so they keep loading in the GIF picker.
+It also renews the expired signed Discord CDN links of your saved favorites, so they keep loading in the GIF picker.
 
 ## How to install?
 
