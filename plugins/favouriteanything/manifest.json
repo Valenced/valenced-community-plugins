@@ -1,8 +1,8 @@
 {
 	"format": 1,
-	"id": "theunrealzaka.favouriteanything",
-	"name": "FavouriteAnything",
-	"description": "Favourite any image or video, not just GIFs, and keep saved favourites loading.",
+	"id": "theunrealzaka.favorite-anything",
+	"name": "Favorite Anything",
+	"description": "Favorite any image or video, not just GIFs, and keep saved favorites loading.",
 	"icon": "StarIcon",
 	"author": "TheUnrealZaka <1268335382118924406> (https://www.theunrealzaka.me \"Website\")",
 	"contributors": ["nin0dev", "davri"],
