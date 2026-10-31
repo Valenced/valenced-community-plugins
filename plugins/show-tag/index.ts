@@ -42,6 +42,11 @@ export default plugin<{ jsonStorage: Settings }>({
 		default: DefaultSettings,
 	},
 	start({ cleanup, jsonStorage, plugin }) {
+		if (plugin.startedLate) {
+			plugin.requireReload()
+			return
+		}
+
 		const UserStore = Stores.UserStore as DiscordModules.Flux.Store<{
 			getUser(id: string): User | undefined
 		}>
