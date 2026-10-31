@@ -74,10 +74,6 @@ function isNamedMemo(value: any): value is ButtonMemo {
 	)
 }
 
-function memoOf(exports: any): ButtonMemo | undefined {
-	return [exports, exports?.default].find(isNamedMemo)
-}
-
 type WithButtonMemo = FilterGenerator<
 	() => Filter<{
 		Result: ButtonMemo
@@ -86,7 +82,7 @@ type WithButtonMemo = FilterGenerator<
 >
 
 const withButtonMemo = createFilterGenerator(
-	(_, __, exports) => !!memoOf(exports),
+	(_, __, exports) => isNamedMemo(exports),
 	() => `memoizedComponentNamed(${ButtonName})`,
 ) as WithButtonMemo
 
@@ -176,11 +172,8 @@ export default plugin({
 			),
 
 			getModules(withButtonMemo(), exports => {
-				const memo = memoOf(exports)
-				if (!memo) return
-
 				cleanup(
-					before(memo, 'type', args => {
+					before(exports, 'type', args => {
 						const [props] = args
 						const source = props?.source
 
