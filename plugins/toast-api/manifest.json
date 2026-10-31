@@ -1,0 +1,16 @@
+{
+	"format": 1,
+	"id": "dev.kmmiio99o.toast.api",
+	"name": "Toast API",
+	"description": "Provides API for custom toast notifications used by other plugins.",
+	"author": "kmmiio99o <879393496627306587> (https://github.com/sponsors/kmmiio99o \"Donations\") (https://kmmiio99o.dev \"Website\") (https://github.com/kmmiio99o \"GitHub\")",
+	"icon": "PollsIcon",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": { "version": ">=1 <2" },
+		"discord": { "version": "*" }
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
