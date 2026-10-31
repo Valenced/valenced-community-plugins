@@ -247,9 +247,22 @@
       "author": "NoReplyUI5 <1053918356375351386> (https://github.com/NoReplyUI5 \"GitHub\")",
       "icon": "voice_bar_bluetooth",
       "channels": {
-        "latest": "1.0.0"
+        "latest": "1.0.0.1"
       },
       "versions": {
+        "1.0.0.1": {
+          "url": "https://community.valenced.app/pool/mxtiy.audiofix@1.0.0.1.zip",
+          "sha256": "a9b45367a85b34349acf6066d8f493eb2ce1f05e074d40d89591a83eccaa367d",
+          "size": 1022,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
         "1.0.0": {
           "url": "https://community.valenced.app/pool/mxtiy.audiofix@1.0.0.zip",
           "sha256": "931694b31afa17d308209945fb3aad744a01a317a98298f16fab00f9b2295e08",
