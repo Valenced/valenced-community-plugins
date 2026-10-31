@@ -67,6 +67,7 @@ This repository comes **pre-installed with Valenced**. If you want to use these 
 | [Tenor GIF Search](plugins/tenor-gif-search) | Brings back Tenor GIF search to Discord. | Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub"), Livie <755950362342457384> | 1.0.0 |
 | [Themes](plugins/settings.themes) | Color themes, font packs, icon packs, and emoji packs. | Valenced, Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub") | 1.0.0 |
 | [Themes API](plugins/api.themes) | Lets theme plugins provide color themes, font packs, icon packs, and emoji packs. | Valenced, Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub"), Ushie <399862294143696897> (https://github.com/Ushie "GitHub"), cocobo1 <767650984175992833> (https://github.com/C0C0B01 "GitHub") | 1.0.1 |
+| [ValidUser](plugins/valid-user) | Resolves @unknown-user mentions to a normal clickable mention. | k1ng_op <641266820187160576> (https://github.com/k1ng0p "GitHub") | 1.0.0 |
 | [Who Reacted](plugins/who-reacted) | Shows the avatars of up to 5 people who reacted on each reaction in chat. | Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub") | 1.0.0 |
 
 <!-- PLUGINS_TABLE_END -->
