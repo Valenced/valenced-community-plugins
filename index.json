@@ -721,6 +721,33 @@
         }
       }
     },
+    "thororen.character-counter": {
+      "name": "Character Counter",
+      "description": "Adds a character counter to the chat input.",
+      "author": "thororen <848339671629299742> (https://www.thororen.com \"Website\") (https://github.com/thororen1234 \"GitHub\")",
+      "contributors": [
+        "creations <209830981060788225> (https://creations.works \"Website\") (https://github.com/creationsss \"GitHub\")"
+      ],
+      "icon": "LettersIcon",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://community.valenced.app/pool/thororen.character-counter@1.0.0.zip",
+          "sha256": "80310e5af62b29042e07152f39cf70b459657f130c9cecdc37c377b53de92dad",
+          "size": 1536,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    },
     "valenced.api.themes": {
       "name": "Themes API",
       "description": "Lets theme plugins provide color themes, font packs, icon packs, and emoji packs.",
