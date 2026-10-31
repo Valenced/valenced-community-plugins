@@ -1,10 +1,20 @@
 import { getModuleWithImportedPath } from '@valenced/discord/utils/modules/finders'
+import { getModules } from '@valenced/modules/finders'
+import {
+	createFilterGenerator,
+	withName,
+} from '@valenced/modules/finders/filters'
 import { after } from '@valenced/patcher'
 import { getErrorStack } from '@valenced/utils/error'
-import { cloneElement, isValidElement } from 'react'
+import { cloneElement } from 'react'
 import SettingsComponent from './settings'
 import { DefaultSettings } from './shared'
-import type { ReactElement, ReactNode } from 'react'
+import type {
+	Filter,
+	FilterGenerator,
+	FilterScopes,
+} from '@valenced/modules/finders/filters'
+import type { FC, MemoExoticComponent, ReactElement, ReactNode } from 'react'
 import type { Settings } from './shared'
 
 interface NodeProps {
@@ -16,10 +26,8 @@ interface NodeProps {
 }
 
 type Node = ReactElement<NodeProps>
-type Prune = (rendered: ReactNode, settings: Settings) => ReactNode
 type Render = (...args: unknown[]) => ReactNode
-
-// Discord's compiler reuses rendered elements, so every change below is made on a copy
+type Prune = (rendered: ReactNode, settings: Settings) => ReactNode
 
 export default plugin<{ jsonStorage: Settings }>({
 	jsonStorage: {
@@ -27,42 +35,60 @@ export default plugin<{ jsonStorage: Settings }>({
 		default: DefaultSettings,
 	},
 	start({ cleanup, jsonStorage, plugin }) {
-		const reported = new Set<string>()
-
-		for (const [path, label, prune] of Surfaces) {
-			cleanup(
-				getModuleWithImportedPath<{ default?: unknown }>(path, module => {
-					// React.memo components keep their render in .type
-					const component = module?.default
-					const [host, key] =
-						typeof component === 'object' &&
-						typeof (component as { type?: unknown } | null)?.type === 'function'
-							? [component, 'type']
-							: typeof component === 'function'
-								? [module, 'default']
-								: []
-					if (!host || !key) return
-
-					cleanup(
-						after(host as Record<string, Render>, key, rendered => {
-							try {
-								return prune(rendered, {
-									...DefaultSettings,
-									...jsonStorage.cache,
-								})
-							} catch (e) {
-								const message = `Failed to hide ${label} buttons: ${getErrorStack(e)}`
-								if (!reported.has(message)) {
-									reported.add(message)
-									plugin.reportError(message)
-								}
-								return rendered
-							}
-						}),
-					)
-				}),
-			)
+		if (plugin.startedLate) {
+			plugin.requireReload()
+			return
 		}
+
+		const reported = new Set<string>()
+		const patch =
+			(label: string, prune: Prune) =>
+			(host: Record<string, Render>, key: string) =>
+				cleanup(
+					after(host, key, rendered => {
+						try {
+							return prune(rendered, {
+								...DefaultSettings,
+								...jsonStorage.cache,
+							})
+						} catch (e) {
+							const message = `Failed to hide ${label} buttons: ${getErrorStack(e)}`
+							if (!reported.has(message)) {
+								reported.add(message)
+								plugin.reportError(message)
+							}
+							return rendered
+						}
+					}),
+				)
+
+		const profile = patch('profile', pruneProfile)
+		const dm = patch('DM header', pruneDM)
+		const friends = patch('friends list', pruneFriends)
+		const voice = patch('voice channel', pruneVoice)
+
+		cleanup(
+			getModules(
+				withName<Render>('UserProfileContactButtons'),
+				module => profile(module as Record<string, Render>, 'default'),
+				{ returnNamespace: true },
+			),
+			getModules(withMemoizedName('PrivateChannelButtons'), component =>
+				dm(component as unknown as Record<string, Render>, 'type'),
+			),
+			// Several lists have a UserRow; the friends list is the one with a call action
+			getModules(
+				withMemoizedName('UserRow'),
+				component =>
+					friends(component as unknown as Record<string, Render>, 'type'),
+				{ max: 10 },
+			),
+			// Exported as plain `VideoButton`, a name another module shares
+			getModuleWithImportedPath<Record<string, Render>>(
+				'modules/voice_panel/native/controls/buttons/VoicePanelVideoButton.tsx',
+				module => voice(module, 'default'),
+			),
+		)
 	},
 	// Unpatching can't undo what Discord already rendered
 	stop({ plugin }) {
@@ -71,199 +97,134 @@ export default plugin<{ jsonStorage: Settings }>({
 	SettingsComponent,
 })
 
-// isValidElement alone misses elements with an older $$typeof tag, like the DM header's
-function isNode(node: unknown): node is Node {
-	if (isValidElement<NodeProps>(node)) return true
+// The call button is always last in the profile's action row
+const pruneProfile: Prune = (root, settings) =>
+	settings.upHideVoiceButton
+		? replaceInTree(
+				root,
+				node => pressables(node).length >= 2,
+				row => {
+					const buttons = pressables(row)
+					return without(row, [buttons[buttons.length - 1]])
+				},
+			)
+		: root
+
+// Only the call and video buttons have a disabled prop, in that order
+const pruneDM: Prune = (root, settings) => {
+	const { dmHideCallButton, dmHideVideoButton } = settings
+	if (!isElement(root) || !Array.isArray(root.props.children)) return root
+	const toggles = root.props.children.filter(
+		child => hasPress(child) && 'disabled' in child.props,
+	)
+	return without(root, [
+		dmHideCallButton ? toggles[0] : undefined,
+		dmHideVideoButton ? toggles[1] : undefined,
+	])
+}
+
+// accessibilityActions and the trailing buttons line up index for index
+const pruneFriends: Prune = (root, settings) =>
+	settings.friendsHideCallButton
+		? replaceInTree(
+				root,
+				node => callActionIndex(node) >= 0,
+				row => {
+					const index = callActionIndex(row)
+					const actions = row.props.accessibilityActions ?? []
+					const trailing = row.props.trailing as Node
+					const buttons = trailing.props.children as ReactNode[]
+					return cloneElement(row, {
+						accessibilityActions: actions.filter((_, i) => i !== index),
+						trailing: without(trailing, [buttons[index]]),
+					})
+				},
+			)
+		: root
+
+const pruneVoice: Prune = (root, settings) =>
+	settings.hideVCVideoButton ? null : root
+
+// Some of Discord's elements carry an older $$typeof, which isValidElement rejects
+function isElement(node: unknown): node is Node {
 	const candidate = node as { $$typeof?: unknown; props?: unknown } | null
 	return (
 		typeof candidate === 'object' &&
 		candidate !== null &&
 		candidate.$$typeof !== undefined &&
-		typeof candidate.props === 'object' &&
-		candidate.props !== null
+		typeof candidate.props === 'object'
 	)
 }
 
-function hasPress(node: Node) {
-	return typeof node.props.onPress === 'function'
+function hasPress(node: unknown): node is Node {
+	return isElement(node) && typeof node.props.onPress === 'function'
 }
 
-// Each step indexes props.children; -1 means a single non-array child
-function getAtPath(root: ReactNode, path: number[]): ReactNode {
-	let node = root
-	for (const step of path) {
-		if (!isNode(node)) return undefined
-		const children = node.props.children
-		node =
-			step === -1
-				? children
-				: Array.isArray(children)
-					? (children[step] as ReactNode)
-					: undefined
-	}
-	return node
+function pressables(node: Node) {
+	const { children } = node.props
+	return Array.isArray(children) ? children.filter(hasPress) : []
 }
 
-function replaceChildren(
-	root: Node,
-	path: number[],
-	children: ReactNode[],
-): Node {
-	if (path.length === 0) return cloneElement(root, undefined, ...children)
-	const [head, ...rest] = path
-	const current = root.props.children
-	if (!Array.isArray(current)) return root
-	const target = current[head]
-	if (!isNode(target)) return root
-	const next = [...current]
-	next[head] = replaceChildren(target, rest, children)
-	return cloneElement(root, undefined, ...next)
-}
-
-function pressablePaths(root: ReactNode): number[][] {
-	const found: number[][] = []
-	const visit = (node: ReactNode, path: number[], depth: number) => {
-		if (depth > 8 || !isNode(node)) return
-		const kids = node.props.children
-		if (isNode(kids)) {
-			const child = [...path, -1]
-			if (hasPress(kids)) found.push(child)
-			visit(kids, child, depth + 1)
-			return
-		}
-		if (!Array.isArray(kids)) return
-		kids.forEach((kid: ReactNode, i: number) => {
-			if (!isNode(kid)) return
-			const child = [...path, i]
-			if (hasPress(kid)) found.push(child)
-			visit(kid, child, depth + 1)
-		})
-	}
-	visit(root, [], 0)
-	return found
-}
-
-// Climb while the subtree holds only the last button, so a two-button row loses its whole cell
-function removeLastPressable(root: Node) {
-	const paths = pressablePaths(root)
-	if (paths.length < 2) return
-	const target = paths[paths.length - 1]
-
-	let chosen = target
-	for (let len = target.length - 1; len >= 1; len--) {
-		const prefix = target.slice(0, len)
-		if (pressablePaths(getAtPath(root, prefix)).length !== 1) break
-		chosen = prefix
-	}
-
-	const path = chosen.slice(0, -1)
-	const container = getAtPath(root, path)
-	if (!isNode(container) || !Array.isArray(container.props.children)) return
-	const drop = chosen[chosen.length - 1]
-	const kept = (container.props.children as ReactNode[]).filter(
-		(_, i) => i !== drop,
+function callActionIndex(node: Node) {
+	const { accessibilityActions, trailing } = node.props
+	const buttons = isElement(trailing) ? trailing.props.children : undefined
+	if (
+		!Array.isArray(accessibilityActions) ||
+		!Array.isArray(buttons) ||
+		buttons.length !== accessibilityActions.length
 	)
-	return kept.length > 0 ? replaceChildren(root, path, kept) : undefined
+		return -1
+	return accessibilityActions.findIndex(
+		action => String(action?.name).toLowerCase() === 'call',
+	)
 }
 
-function mapElements(
-	node: ReactNode,
-	fn: (element: Node) => Node,
+// A copy of the row with the given children taken out; untouched if that would empty it
+function without(row: Node, remove: ReactNode[]) {
+	const { children } = row.props
+	if (!Array.isArray(children)) return row
+	const kept = children.filter(
+		child => child == null || !remove.includes(child),
+	)
+	return kept.length > 0 && kept.length !== children.length
+		? cloneElement(row, undefined, ...kept)
+		: row
+}
+
+// Discord's compiler reuses rendered elements, so the path to the change is copied
+function replaceInTree(
+	root: ReactNode,
+	match: (node: Node) => boolean,
+	replace: (node: Node) => ReactNode,
 	depth = 0,
 ): ReactNode {
-	if (depth > 10) return node
-	if (Array.isArray(node)) {
-		let changed = false
-		const mapped = node.map((child: ReactNode) => {
-			const next = mapElements(child, fn, depth + 1)
-			if (next !== child) changed = true
-			return next
-		})
-		return changed ? mapped : node
+	if (depth > 10 || !isElement(root)) return root
+	if (match(root)) return replace(root)
+	const { children } = root.props
+	if (Array.isArray(children)) {
+		for (let i = 0; i < children.length; i++) {
+			const next = replaceInTree(children[i], match, replace, depth + 1)
+			if (next === children[i]) continue
+			const copy = [...children]
+			copy[i] = next
+			return cloneElement(root, undefined, ...copy)
+		}
+		return root
 	}
-	if (!isNode(node)) return node
-	const children = node.props.children
-	const next =
-		children == null ? children : mapElements(children, fn, depth + 1)
-	return fn(next === children ? node : cloneElement(node, undefined, next))
+	const next = replaceInTree(children, match, replace, depth + 1)
+	return next === children ? root : cloneElement(root, undefined, next)
 }
 
-// The call button is always last in the profile's action row
-const pruneProfile: Prune = (root, settings) => {
-	if (!settings.upHideVoiceButton || !isNode(root)) return root
-	return removeLastPressable(root) ?? root
-}
-
-// Only the call and video buttons have a disabled prop, in that order
-const pruneDM: Prune = (root, settings) => {
-	const { dmHideCallButton, dmHideVideoButton } = settings
-	if ((!dmHideCallButton && !dmHideVideoButton) || !isNode(root)) return root
-	const children = root.props.children
-	if (!Array.isArray(children)) return root
-
-	const toggles = (children as ReactNode[]).flatMap((child, i) =>
-		isNode(child) && hasPress(child) && 'disabled' in child.props ? [i] : [],
-	)
-	const drop = new Set<number>()
-	if (dmHideCallButton && toggles.length > 0) drop.add(toggles[0])
-	if (dmHideVideoButton && toggles.length > 1) drop.add(toggles[1])
-	if (drop.size === 0) return root
-	const kept = (children as ReactNode[]).filter((_, i) => !drop.has(i))
-	return kept.length > 0 ? cloneElement(root, undefined, ...kept) : root
-}
-
-// accessibilityActions and the trailing buttons line up index for index
-const pruneFriends: Prune = (root, settings) => {
-	if (!settings.friendsHideCallButton || !isNode(root)) return root
-	return mapElements(root, element => {
-		const actions = element.props.accessibilityActions
-		const trailing = element.props.trailing
-		const buttons = isNode(trailing) ? trailing.props.children : undefined
-		const index = Array.isArray(actions)
-			? actions.findIndex(
-					action => String(action?.name).toLowerCase() === 'call',
-				)
-			: -1
-		if (
-			!isNode(trailing) ||
-			index < 0 ||
-			!Array.isArray(buttons) ||
-			buttons.length !== actions?.length
-		)
-			return element
-		return cloneElement(element, {
-			accessibilityActions: actions.filter((_, i) => i !== index),
-			trailing: cloneElement(
-				trailing,
-				undefined,
-				...(buttons as ReactNode[]).filter((_, i) => i !== index),
-			),
-		})
-	})
-}
-
-const pruneVoice: Prune = (root, settings) =>
-	settings.hideVCVideoButton ? null : root
-
-const Surfaces: [path: string, label: string, prune: Prune][] = [
-	[
-		'modules/user_profile/native/UserProfileContactButtons.tsx',
-		'profile',
-		pruneProfile,
-	],
-	[
-		'modules/main_tabs_v2/native/channel/header/PrivateChannelButtons.tsx',
-		'DM header',
-		pruneDM,
-	],
-	[
-		'modules/main_tabs_v2/native/shared_components/user_list/UserRow.tsx',
-		'friends list',
-		pruneFriends,
-	],
-	[
-		'modules/voice_panel/native/controls/buttons/VoicePanelVideoButton.tsx',
-		'voice channel',
-		pruneVoice,
-	],
-]
+// withName can't see through memo(), but the wrapped function keeps its name
+const withMemoizedName = createFilterGenerator(
+	([name], _, exports) =>
+		typeof exports?.type === 'function' && exports.type.name === name,
+	([name]) => `bleelblep.hide-call-buttons.memoizedName(${name})`,
+) as FilterGenerator<
+	<P = object>(
+		name: string,
+	) => Filter<{
+		Result: MemoExoticComponent<FC<P>>
+		Scopes: [typeof FilterScopes.Initialized]
+	}>
+>
