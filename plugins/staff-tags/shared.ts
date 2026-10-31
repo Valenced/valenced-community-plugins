@@ -27,10 +27,6 @@ export function init(
 	reporter = plugin
 }
 
-export function useStorage() {
-	storage?.use()
-}
-
 export function settings(): Settings {
 	return { ...DefaultSettings, ...storage?.cache }
 }
@@ -41,11 +37,6 @@ export function overrideFor(id: string): TagOverride {
 
 export function setOverride(id: string, patch: TagOverride) {
 	storage?.set({ tags: { [id]: patch } } as Partial<Settings>)
-}
-
-// set() merges and can't delete a key, so reset writes blank values instead
-export function resetOverride(id: string) {
-	setOverride(id, { enabled: true, text: '', useCustomColor: false, color: '' })
 }
 
 // Hooks run on every row, so each distinct error is reported once

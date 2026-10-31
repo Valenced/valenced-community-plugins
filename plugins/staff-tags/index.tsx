@@ -1,4 +1,3 @@
-import { getModuleWithImportedPath } from '@valenced/discord/utils/modules/finders'
 import { getModules } from '@valenced/modules/finders'
 import {
 	createFilterGenerator,
@@ -6,15 +5,15 @@ import {
 	withProps,
 } from '@valenced/modules/finders/filters'
 import { after, instead } from '@valenced/patcher'
+import { findInReactFiber } from '@valenced/utils/react'
 import { cloneElement, createElement, isValidElement } from 'react'
 import { processColor } from 'react-native'
-import SettingsComponent, { registerPages } from './settings'
+import SettingsComponent from './settings'
 import { DefaultSettings, init, report, settings } from './shared'
 import {
 	getTag,
 	isBuiltInTag,
-	offerPermissionHelper,
-	resetModules,
+	setPermissionUtils,
 	setTagModule,
 	stores,
 	tagModule,
@@ -22,7 +21,13 @@ import {
 } from './tags'
 import type { ReactElement, ReactNode } from 'react'
 import type { Settings } from './shared'
-import type { ResolvedTag, TagModule, TagProps, User } from './tags'
+import type {
+	PermissionUtils,
+	ResolvedTag,
+	TagModule,
+	TagProps,
+	User,
+} from './tags'
 
 type Element = ReactElement<{ children?: ReactNode; [prop: string]: unknown }>
 
@@ -46,17 +51,28 @@ interface UserProps {
 
 type DisplayName = (props: UserProps) => ReactNode
 
+interface ProfileModule {
+	default: (...args: unknown[]) => ReactNode
+	DisplayName: DisplayName
+}
+
 export default plugin<{ jsonStorage: Settings }>({
 	jsonStorage: {
 		load: true,
 		default: DefaultSettings,
 	},
 	start({ cleanup, jsonStorage, plugin }) {
+		if (plugin.startedLate) {
+			plugin.requireReload()
+			return
+		}
+
 		init(jsonStorage, plugin)
 		cleanup(() => {
 			init()
-			resetModules()
-		}, registerPages())
+			setTagModule(undefined)
+			setPermissionUtils(undefined)
+		})
 
 		// These can run as a bare engine job, where an uncaught throw closes the app
 		const guarded =
@@ -93,14 +109,6 @@ export default plugin<{ jsonStorage: Settings }>({
 			},
 		)
 
-		// withName can't see through React.memo, but the wrapped function keeps its name
-		const withMemoName = createFilterGenerator<[name: string]>(
-			([name], _id, exports) =>
-				(exports as { type?: { name?: string } } | undefined)?.type?.name ===
-				name,
-			([name]) => `bleelblep.staff-tags.memoName(${name})`,
-		)
-
 		cleanup(
 			getModules(
 				withProps<TagModule>('getBotLabel'),
@@ -123,27 +131,8 @@ export default plugin<{ jsonStorage: Settings }>({
 
 			// PermissionStore also has computePermissions, but answers for the current user only
 			getModules(
-				withProps('computePermissionsForMember'),
-				guarded('Permissions', module =>
-					offerPermissionHelper(
-						exported(module, 'computePermissionsForMember'),
-						0,
-					),
-				),
-			),
-			getModules(
-				withProps('computePermissions', 'canEveryoneRole'),
-				guarded('Permissions', module =>
-					offerPermissionHelper(exported(module, 'computePermissions'), 1),
-				),
-			),
-			getModules(
-				withProps('computePermissions'),
-				guarded('Permissions', module => {
-					if (typeof exported(module, 'addChangeListener') !== 'function')
-						offerPermissionHelper(exported(module, 'computePermissions'), 2)
-				}),
-				{ max: 20 },
+				withProps<PermissionUtils>('computePermissions', 'canEveryoneRole'),
+				guarded('Permissions', setPermissionUtils),
 			),
 
 			getModules(
@@ -173,21 +162,17 @@ export default plugin<{ jsonStorage: Settings }>({
 			getModules(withName('UserRow'), patchRow, { max: 10 }),
 			getModules(withMemoName('UserRow'), patchRow, { max: 10 }),
 
-			// Function names are minified, so this is found by source path
-			getModuleWithImportedPath<{
-				default: (...args: unknown[]) => ReactNode
-				DisplayName?: DisplayName
-			}>(
-				'modules/user_profile/native/UserProfilePrimaryInfo.tsx',
+			// The profile's default export renders DisplayName from module scope, so the element is swapped
+			getModules(
+				withProps<ProfileModule>('DisplayName'),
 				guarded('Profile', module => {
-					const { DisplayName } = module ?? {}
+					const { DisplayName } = module
 					if (
-						typeof module?.default !== 'function' ||
+						typeof module.default !== 'function' ||
 						typeof DisplayName !== 'function'
 					)
 						return
 
-					// default renders DisplayName from its own scope, so swap the element instead
 					const Wrapped: DisplayName = props => {
 						const rendered = DisplayName(props)
 						try {
@@ -227,14 +212,6 @@ export default plugin<{ jsonStorage: Settings }>({
 	SettingsComponent,
 })
 
-function exported(exports: unknown, key: string) {
-	const module = exports as
-		| (Record<string, unknown> & { default?: Record<string, unknown> })
-		| undefined
-	const own = module?.[key]
-	return typeof own === 'function' ? own : module?.default?.[key]
-}
-
 // Message rows are drawn natively from text and colours
 function addMessageTag(ret: TagProperties | undefined, message?: Message) {
 	if (ret?.tagText || !message?.author) return ret
@@ -260,7 +237,7 @@ const isTagElement = (node: Element) =>
 function addRowTag(rendered: ReactNode, props?: UserProps) {
 	if (!isElement(rendered)) return rendered
 	const label = rendered.props.label as ReactNode
-	const nameContainer = findInTree(
+	const nameContainer = find(
 		label,
 		node =>
 			Array.isArray(node.props.children) &&
@@ -330,7 +307,7 @@ function withTag(
 	extraProps: TagProps = {},
 ) {
 	const scope = typeof target === 'function' ? tree : target
-	const existing = findInTree(scope, isTagElement)
+	const existing = find(scope, isTagElement)
 	if (existing && isBuiltInTag(existing.props.type)) return tree
 	const tag = getResolved()
 	if (!tag) return tree
@@ -353,10 +330,7 @@ function withTag(
 function paintTag(rendered: ReactNode, props?: TagProps) {
 	const { text, textColor, backgroundColor } = props ?? {}
 	if (!isElement(rendered)) return rendered
-	const label = findInTree(
-		rendered,
-		node => typeof node.props.children === 'string',
-	)
+	const label = find(rendered, node => typeof node.props.children === 'string')
 	if (!label) return rendered
 
 	let out = rendered
@@ -380,8 +354,6 @@ function paintTag(rendered: ReactNode, props?: TagProps) {
 	return out
 }
 
-const MaxDepth = 30
-
 function isElement(node: unknown): node is Element {
 	return isValidElement(node)
 }
@@ -391,22 +363,13 @@ function childList(children: ReactNode): ReactNode[] {
 	return Array.isArray(children) ? [...children] : [children]
 }
 
-function findInTree(
-	root: ReactNode,
-	match: (node: Element) => boolean,
-	depth = 0,
-): Element | undefined {
-	if (depth > MaxDepth) return
-	if (Array.isArray(root)) {
-		for (const child of root as ReactNode[]) {
-			const found = findInTree(child, match, depth + 1)
-			if (found) return found
-		}
-		return
-	}
-	if (!isElement(root)) return
-	if (match(root)) return root
-	return findInTree(root.props.children, match, depth + 1)
+function find(tree: ReactNode, match: (node: Element) => boolean) {
+	return isElement(tree)
+		? findInReactFiber(
+				tree,
+				(node): node is Element => isElement(node) && match(node),
+			)
+		: undefined
 }
 
 // Copies only the path to the match: Discord reuses rendered elements across renders
@@ -416,7 +379,7 @@ function replaceInTree(
 	replace: (node: Element) => ReactNode,
 	depth = 0,
 ): ReactNode {
-	if (depth > MaxDepth || !isElement(root)) return root
+	if (depth > 30 || !isElement(root)) return root
 	if (match(root)) return replace(root)
 	const { children } = root.props
 	if (Array.isArray(children)) {
@@ -433,3 +396,10 @@ function replaceInTree(
 	const next = replaceInTree(children, match, replace, depth + 1)
 	return next === children ? root : cloneElement(root, { children: next })
 }
+
+// withName can't see through React.memo, but the wrapped function keeps its name
+const withMemoName = createFilterGenerator<[name: string]>(
+	([name], _id, exports) =>
+		(exports as { type?: { name?: string } } | undefined)?.type?.name === name,
+	([name]) => `bleelblep.staff-tags.memoName(${name})`,
+)

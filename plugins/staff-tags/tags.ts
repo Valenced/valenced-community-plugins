@@ -34,6 +34,16 @@ export interface TagModule {
 	getBotLabel?(type: number): unknown
 }
 
+export interface PermissionUtils {
+	computePermissions(input: {
+		user: User
+		context: Guild
+		overwrites?: unknown
+		checkElevated: boolean
+	}): bigint | number | string | undefined
+	canEveryoneRole: unknown
+}
+
 type Store<T> = DiscordModules.Flux.Store<T> | undefined
 
 export const stores = {
@@ -138,26 +148,15 @@ export interface ResolvedTag {
 	backgroundColor: string
 }
 
-type PermissionHelper = (...args: unknown[]) => unknown
-
 export let tagModule: TagModule | undefined
-let permissionHelper: PermissionHelper | undefined
-let permissionRank = Number.POSITIVE_INFINITY
+let permissionUtils: PermissionUtils | undefined
 
 export function setTagModule(module: TagModule | undefined) {
 	tagModule = module
 }
 
-export function offerPermissionHelper(helper: unknown, rank: number) {
-	if (typeof helper !== 'function' || rank > permissionRank) return
-	permissionHelper = helper as PermissionHelper
-	permissionRank = rank
-}
-
-export function resetModules() {
-	tagModule = undefined
-	permissionHelper = undefined
-	permissionRank = Number.POSITIVE_INFINITY
+export function setPermissionUtils(utils: PermissionUtils | undefined) {
+	permissionUtils = utils
 }
 
 export function isBuiltInTag(type: unknown): boolean {
@@ -180,62 +179,31 @@ export function tagProps(tag: ResolvedTag): TagProps {
 	}
 }
 
-// The argument order differs between builds
-const CallShapes: ((
-	helper: PermissionHelper,
-	guild: Guild,
-	channel: Channel | undefined,
-	user: User,
-) => unknown)[] = [
-	(helper, guild, channel, user) =>
-		helper({ user, context: guild, overwrites: channel?.permissionOverwrites }),
-	(helper, guild, channel, user) =>
-		helper({
-			user,
-			context: guild,
-			overwrites: channel?.permissionOverwrites,
-			checkElevated: false,
-		}),
-	(helper, guild, channel, user) => helper(user, guild, channel),
-	(helper, guild, channel, user) => helper(guild, channel, user),
-]
-
-let shapeFor: PermissionHelper | undefined
-let workingShape: number | undefined
-
 function computePermissions(
 	guild: Guild,
 	channel: Channel | undefined,
 	user: User,
 ): bigint | undefined {
-	const helper = permissionHelper
-	if (!helper) return
-	if (helper !== shapeFor) {
-		shapeFor = helper
-		workingShape = undefined
+	if (!permissionUtils) return
+	try {
+		const result = permissionUtils.computePermissions({
+			user,
+			context: guild,
+			overwrites: channel?.permissionOverwrites,
+			checkElevated: false,
+		})
+		if (
+			typeof result === 'bigint' ||
+			typeof result === 'number' ||
+			(typeof result === 'string' && /^\d+$/.test(result))
+		)
+			return BigInt(result)
+	} catch (error) {
+		report(
+			'Could not compute permissions. ADMIN/STAFF/MOD tags will not appear',
+			error,
+		)
 	}
-	if (workingShape === -1) return
-
-	const candidates =
-		workingShape === undefined ? CallShapes.map((_, i) => i) : [workingShape]
-	for (const index of candidates) {
-		try {
-			const result = CallShapes[index](helper, guild, channel, user)
-			if (
-				typeof result === 'bigint' ||
-				typeof result === 'number' ||
-				(typeof result === 'string' && /^\d+$/.test(result))
-			) {
-				workingShape = index
-				return BigInt(result)
-			}
-		} catch {}
-	}
-
-	workingShape = -1
-	report(
-		'Could not compute permissions on this Discord version. ADMIN/STAFF/MOD tags will not appear.',
-	)
 }
 
 function isDarkColor(hex: string) {
