@@ -1,4 +1,4 @@
-// FavouriteAnything - by @TheUnrealZaka
+// FavoriteAnything - by @TheUnrealZaka
 // Ported from the Equicord desktop plugin (nin0dev & davri)
 // Patches GIFFavButton so the star shows on all media, not just GIFs.
 
