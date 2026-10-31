@@ -1,14 +1,20 @@
 import { Design } from '@valenced/discord/design'
+import { getModules } from '@valenced/modules/finders'
 import {
-	getModuleWithImportedPath,
-	lookupModuleWithImportedPath,
-} from '@valenced/discord/utils/modules/finders'
+	createFilterGenerator,
+	withProps,
+} from '@valenced/modules/finders/filters'
 import { instead } from '@valenced/patcher'
 import { useImperativeHandle, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import SettingsComponent from './settings'
 import { DefaultSettings } from './shared'
 import type { JsonStorage } from '@valenced/json-storage'
+import type {
+	Filter,
+	FilterGenerator,
+	FilterScopes,
+} from '@valenced/modules/finders/filters'
 import type { FC, MemoExoticComponent, Ref } from 'react'
 import type { StyleProp, ViewStyle } from 'react-native'
 import type { Settings } from './shared'
@@ -16,6 +22,7 @@ import type { Settings } from './shared'
 const { Text } = Design
 
 let storage: JsonStorage<Settings>
+let MessageMaxLength: { getMaxMessageLength(): number } | undefined
 
 export default plugin<{ jsonStorage: Settings }>({
 	jsonStorage: {
@@ -31,13 +38,15 @@ export default plugin<{ jsonStorage: Settings }>({
 		storage = jsonStorage
 
 		cleanup(
-			getModuleWithImportedPath<{
-				default: MemoExoticComponent<FC<CounterProps>> & {
-					type: FC<CounterProps>
-				}
-			}>(
-				'modules/chat_input/native/accessories/ChatInputCharCounter.tsx',
-				({ default: ChatInputCharCounter }) => {
+			getModules(
+				withProps<{ getMaxMessageLength(): number }>('getMaxMessageLength'),
+				mod => {
+					MessageMaxLength = mod
+				},
+			),
+			getModules(
+				withMemoizedNamedComponent<CounterProps>('ChatInputCharCounter'),
+				ChatInputCharCounter => {
 					cleanup(
 						instead(ChatInputCharCounter, 'type', ([props]) => (
 							<CharacterCounter {...props} />
@@ -64,10 +73,7 @@ function CharacterCounter({ ref, style }: CounterProps) {
 
 	if (!length) return null
 
-	const max =
-		lookupModuleWithImportedPath<{ getMaxMessageLength(): number }>(
-			'modules/messages/useMessageMaxLength.tsx',
-		)[0]?.getMaxMessageLength() ?? 2000
+	const max = MessageMaxLength?.getMaxMessageLength() ?? 2000
 
 	return (
 		<View style={style} pointerEvents="none">
@@ -95,6 +101,20 @@ const styles = StyleSheet.create({
 		transform: [{ translateX: 1 }, { translateY: -11 }],
 	},
 })
+
+type WithMemoizedNamedComponent = FilterGenerator<
+	<P = object>(
+		name: string,
+	) => Filter<{
+		Result: MemoExoticComponent<FC<P>>
+		Scopes: [typeof FilterScopes.Initialized]
+	}>
+>
+
+const withMemoizedNamedComponent = createFilterGenerator(
+	([name], _, exports) => exports?.type?.displayName === name,
+	([name]) => `memoizedNamedComponent(${name})`,
+) as WithMemoizedNamedComponent
 
 interface CounterProps {
 	ref: Ref<{ onMessageLengthChanged(length: number): void }>
