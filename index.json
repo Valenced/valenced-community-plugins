@@ -165,6 +165,32 @@
         }
       }
     },
+    "hakuxyz.clear-urls": {
+      "name": "Clear URLs",
+      "description": "Strips tracking parameters from URLs you view, send, or edit.",
+      "author": "hakuxyz (https://github.com/hakuxyz \"GitHub\")",
+      "contributors": [
+        "nexpid <853550207039832084> (https://github.com/nexpid \"GitHub\")"
+      ],
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://community.valenced.app/pool/hakuxyz.clear-urls@1.0.0.zip",
+          "sha256": "248a3c4799a7675093064a511472819d8404905d8fb18d0d11cddd4fa84d18b7",
+          "size": 1595,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    },
     "k1ngop.anonymous-file-names": {
       "name": "Anonymous File Names",
       "description": "Randomizes file names before you upload them.",
