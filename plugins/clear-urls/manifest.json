@@ -1,0 +1,22 @@
+{
+	"format": 1,
+	"id": "hakuxyz.clear-urls",
+	"name": "Clear URLs",
+	"description": "Strips tracking parameters from URLs you view, send, or edit.",
+	"author": "hakuxyz (https://github.com/hakuxyz \"GitHub\")",
+	"contributors": [
+		"nexpid <853550207039832084> (https://github.com/nexpid \"GitHub\")"
+	],
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
