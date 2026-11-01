@@ -1,0 +1,27 @@
+{
+	"format": 1,
+	"id": "thororen.new-guild-settings",
+	"name": "New Guild Settings",
+	"description": "Automatically mutes new servers and changes their notification and channel settings when you join them.",
+	"author": "thororen <848339671629299742> (https://www.thororen.com \"Website\") (https://github.com/thororen1234 \"GitHub\")",
+	"contributors": [
+		"carince <818323528755314698>",
+		"Glitch <269567451199569920>",
+		"Nuckyz <235834946571337729>",
+		"Mopi <1022189106614243350>",
+		"GabiRP <507955112027750401>"
+	],
+	"icon": "BellSlashIcon",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
