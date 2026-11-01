@@ -1,0 +1,20 @@
+{
+	"format": 1,
+	"id": "redstonekasi.no-embed-copy",
+	"name": "NoEmbedCopy",
+	"description": "Makes pressing on an embed no longer copy its content.",
+	"author": "redstonekasi <265064055490871297>",
+	"icon": "CopyIcon",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
