@@ -1,0 +1,24 @@
+{
+    "format":  1,
+    "id":  "rosie.better-you-bar",
+    "name":  "BetterYouBar",
+    "description":  "Customize your YouBar bottom navigation bar with Direct Messages and Settings shortcuts.",
+    "author":  "Rosie, Benjii",
+    "icon":  "ChannelsIcon",
+    "version":  "1.1.2",
+    "dependencies":  {
+                         "valenced.api":  {
+                                              "version":  "\u003e=1 \u003c2"
+                                          },
+                         "discord":  {
+                                         "version":  "*"
+                                     }
+                     },
+    "dist":  {
+                 "script":  "index.js",
+                 "android":  {
+                                 "path":  "plugin.jar",
+                                 "class":  "rosie.youbarplus.YouBarPlusPlugin"
+                             }
+             }
+}
