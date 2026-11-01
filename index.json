@@ -885,6 +885,33 @@
         }
       }
     },
+    "thororen.tenor-gif-fix": {
+      "name": "Tenor GIF Fix",
+      "description": "Download and share Tenor links as GIFs instead of MP4s.",
+      "author": "thororen <848339671629299742> (https://www.thororen.com \"Website\") (https://github.com/thororen1234 \"GitHub\")",
+      "contributors": [
+        "nexpid <853550207039832084> (https://github.com/nexpid \"GitHub\")"
+      ],
+      "icon": "GifIcon",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://community.valenced.app/pool/thororen.tenor-gif-fix@1.0.0.zip",
+          "sha256": "b9425a8f2dda7bad3b219d8359a8b6a3883f474b4e08ff2c99e8e2b430784215",
+          "size": 983,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    },
     "valenced.api.themes": {
       "name": "Themes API",
       "description": "Lets theme plugins provide color themes, font packs, icon packs, and emoji packs.",
