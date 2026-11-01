@@ -858,6 +858,33 @@
         }
       }
     },
+    "thororen.no-embed-copy": {
+      "name": "No Embed Copy",
+      "description": "Makes pressing on an embed no longer copy its content.",
+      "author": "thororen <848339671629299742> (https://www.thororen.com \"Website\") (https://github.com/thororen1234 \"GitHub\")",
+      "contributors": [
+        "redstonekasi <265064055490871297> (https://github.com/redstonekasi \"GitHub\")"
+      ],
+      "icon": "CopyIcon",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://community.valenced.app/pool/thororen.no-embed-copy@1.0.0.zip",
+          "sha256": "727ccfcc91c9113ee9460ae6a9abbc9145a875d29406c3ba042af9dc83db5192",
+          "size": 802,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    },
     "valenced.api.themes": {
       "name": "Themes API",
       "description": "Lets theme plugins provide color themes, font packs, icon packs, and emoji packs.",
