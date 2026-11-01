@@ -56,8 +56,9 @@ export default plugin<{ jsonStorage: SettingsData }>({
 				},
 			),
 		)
-		function install(http: HttpModule['HTTP'], viewStore: GifViewStore) {
-			const get: HttpRequest = http.get.bind(http)
+		function install(module: HttpModule, viewStore: GifViewStore) {
+			const http = module.HTTP
+			const get: HttpRequest = module.get.bind(module)
 
 			setActive(true)
 			cleanup(
@@ -247,7 +248,7 @@ export default plugin<{ jsonStorage: SettingsData }>({
 						getStore<GifViewStore>('GIFPickerViewStore', viewStore => {
 							if (stopped) return
 							try {
-								install(module.HTTP, viewStore)
+								install(module, viewStore)
 							} catch (error) {
 								plugin.reportError(error)
 								stopped = true

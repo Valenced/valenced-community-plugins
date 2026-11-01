@@ -34,7 +34,7 @@ export type HttpRequest = (
 
 export interface HttpModule {
 	HTTP: { get: HttpRequest; post: HttpRequest }
-	get: unknown
+	get: HttpRequest
 	post: unknown
 	put: unknown
 	patch: unknown
