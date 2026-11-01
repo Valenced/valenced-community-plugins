@@ -1,11 +1,11 @@
 {
 	"format": 1,
 	"id": "kmmiio99o.multi-scrobbler",
-	"name": "MultiScrobbler",
+	"name": "Multi Scrobbler",
 	"description": "Shows what you are listening to on Last.fm, Libre.fm or ListenBrainz as your Discord activity.",
-	"author": "kmmiio99o <879393496627306587> (https://github.com/kmmiio99o \"GitHub\")",
+	"author": "thororen <848339671629299742> (https://www.thororen.com \"Website\") (https://github.com/thororen1234 \"GitHub\")",
 	"contributors": [
-		"thororen <848339671629299742> (https://www.thororen.com \"Website\") (https://github.com/thororen1234 \"GitHub\")"
+		"kmmiio99o <879393496627306587> (https://github.com/kmmiio99o \"GitHub\")"
 	],
 	"icon": "MusicIcon",
 	"version": "1.0.0",
