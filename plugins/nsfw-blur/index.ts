@@ -23,7 +23,7 @@ type CreateMessageContent = (
 export default plugin({
 	start({ cleanup }) {
 		const ChannelStore = Stores.ChannelStore as DiscordModules.Flux.Store<{
-			getChannel(id: string): { nsfw_?: boolean } | undefined
+			getChannel(id: string): { isNSFW(): boolean } | undefined
 		}>
 
 		cleanup(
@@ -40,7 +40,7 @@ export default plugin({
 							args => {
 								const { message, options } = args[0] ?? {}
 								if (!message?.channel_id || !options) return args
-								if (!ChannelStore.getChannel(message.channel_id)?.nsfw_)
+								if (!ChannelStore.getChannel(message.channel_id)?.isNSFW())
 									return args
 
 								options.inlineEmbedMedia = false
