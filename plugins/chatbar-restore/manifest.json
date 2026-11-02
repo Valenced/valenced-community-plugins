@@ -1,0 +1,15 @@
+{
+	"format": 1,
+	"id": "dev.caffeinepx.chatbar-restore",
+	"name": "Chatbar Restore",
+	"description": "Restores the old chat bar. No floating composer, no extra padding on the sides.",
+	"author": "Scarlett (https://github.com/caffeinepx \"GitHub\")",
+	"version": "1.0.1",
+	"dependencies": {
+		"valenced.api": { "version": ">=1 <2" },
+		"discord": { "version": "*" }
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
