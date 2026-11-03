@@ -149,16 +149,39 @@ const categorySpecs: CategorySpec[] = [
 ]
 
 function buildCategories(channelSettableOnly = false): PermissionCategory[] {
-	return categorySpecs
-		.filter(spec => !channelSettableOnly || spec[1])
-		.map(([label, , entries]) => ({
-			label,
-			permissions: entries.map(([name, entryLabel]) => ({
-				name,
-				flag: permissionFlagOf(name),
-				label: entryLabel,
-			})),
-		}))
+	const all = flags
+	if (!all)
+		throw new Error('permission flags were read before the map resolved')
+
+	const claimed = new Set<bigint>()
+	const categories: PermissionCategory[] = []
+
+	for (const [label, channelSettable, entries] of categorySpecs) {
+		if (channelSettableOnly && !channelSettable) continue
+		const permissions: PermissionEntry[] = []
+		for (const [name, entryLabel] of entries) {
+			const flag = all[name]
+			if (flag === undefined) continue
+			claimed.add(flag)
+			permissions.push({ name, flag, label: entryLabel })
+		}
+		if (permissions.length) categories.push({ label, permissions })
+	}
+
+	// Any client flag the curated list does not name yet still renders here.
+	if (!channelSettableOnly) {
+		const leftovers: PermissionEntry[] = []
+		for (const [name, flag] of Object.entries(all)) {
+			if (claimed.has(flag)) continue
+			claimed.add(flag)
+			leftovers.push({ name, flag, label: name })
+		}
+		if (leftovers.length) {
+			categories.push({ label: 'Other', permissions: leftovers })
+		}
+	}
+
+	return categories
 }
 
 let categories: PermissionCategory[] | undefined
