@@ -76,6 +76,9 @@ const categorySpecs: CategorySpec[] = [
 			['SEND_VOICE_MESSAGES', 'Send voice messages'],
 			['MENTION_EVERYONE', 'Mention @everyone, @here, and all roles'],
 			['READ_MESSAGE_HISTORY', 'Read message history'],
+			['PIN_MESSAGES', 'Pin messages'],
+			['BYPASS_SLOWMODE', 'Bypass slowmode'],
+			['MANAGE_OFFICIAL_MESSAGES', 'Manage official messages'],
 		],
 	],
 	[
@@ -92,6 +95,7 @@ const categorySpecs: CategorySpec[] = [
 			['MUTE_MEMBERS', 'Mute members'],
 			['DEAFEN_MEMBERS', 'Deafen members'],
 			['MOVE_MEMBERS', 'Move members'],
+			['SET_VOICE_CHANNEL_STATUS', 'Set voice channel status'],
 		],
 	],
 	[
@@ -137,6 +141,9 @@ const categorySpecs: CategorySpec[] = [
 				'View role subscription insights',
 			],
 			['SEND_POLLS', 'Create polls'],
+			['USE_APPLICATION_COMMANDS', 'Use application commands'],
+			['CREATE_EVENTS', 'Create events'],
+			['MANAGE_EVENTS', 'Manage events'],
 		],
 	],
 ]
