@@ -1,0 +1,20 @@
+{
+	"format": 1,
+	"id": "dev.loki-vtx.selectablebios",
+	"name": "Selectable Bios",
+	"description": "Makes profile 'About Me' text selectable, allowing you to copy and share it.",
+	"author": "Loki-vtx <918437723755384832> (https://github.com/Loki-vtx \"GitHub\")",
+	"icon": "PencilIcon",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}

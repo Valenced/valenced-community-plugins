@@ -1,0 +1,15 @@
+{
+	"format": 1,
+	"id": "theunrealzaka.favorite-anything",
+	"name": "Favorite Anything",
+	"description": "Favorite any image or video, not just GIFs, and keep saved favorites loading.",
+	"icon": "StarIcon",
+	"author": "TheUnrealZaka <1268335382118924406> (https://www.theunrealzaka.me \"Website\")",
+	"contributors": ["nin0dev", "davri"],
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": { "version": ">=1 <2" },
+		"discord": { "version": "*" }
+	},
+	"dist": { "script": "index.js" }
+}
