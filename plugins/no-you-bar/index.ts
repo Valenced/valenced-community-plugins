@@ -3,7 +3,7 @@ import { createElement } from 'react'
 import { TabBar } from './bar'
 import { fadeTabScreens, swapRender, withTabBar } from './screens'
 import SettingsComponent from './settings'
-import { DEFAULT_SETTINGS, found } from './state'
+import { DEFAULT_SETTINGS, found, foundModulesChanged } from './state'
 import type { ReactNode } from 'react'
 import type { Badge, RootRef, Storage } from './state'
 
@@ -63,6 +63,9 @@ export default plugin({
 				`${BASE}native/tabs/notifications/useNotificationsTabBadge.tsx`,
 				exports => {
 					found.badge = (exports as { default?: () => Badge }).default
+					// A bar rendered before this module loaded has a no-op
+					// badge; re-render it so it remounts onto the real hook.
+					foundModulesChanged()
 				},
 			),
 			getModuleWithImportedPath(`${BASE}native/you_bar/YouBar.tsx`, exports => {

@@ -52,6 +52,30 @@ export const found: {
 	storage?: Storage
 } = {}
 
+// Discord's modules can finish loading after the bar has already rendered.
+// start() calls foundModulesChanged() when one of the modules above arrives;
+// a bar that already rendered without it re-renders and picks it up. Without
+// this, a bar that rendered before useNotificationsTabBadge loaded would keep
+// its no-op badge forever.
+const moduleListeners = new Set<() => void>()
+
+export function foundModulesChanged() {
+	for (const listener of moduleListeners) listener()
+}
+
+export function useFoundModules() {
+	const [, bump] = useState(0)
+	useEffect(() => {
+		const listener = () => bump(n => n + 1)
+		moduleListeners.add(listener)
+		// A module may have arrived between this render and the subscription.
+		listener()
+		return () => {
+			moduleListeners.delete(listener)
+		}
+	}, [])
+}
+
 // Plain state + subscribe, so the hooks here are the same on every render
 // whether or not the storage has finished loading. Missing keys (older
 // storage files) fall back to the defaults.

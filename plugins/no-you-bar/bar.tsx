@@ -3,10 +3,14 @@ import { Design } from '@valenced/discord/design'
 import { Stores } from '@valenced/discord/flux'
 import { lookupModuleWithImportedPath } from '@valenced/discord/utils/modules/finders'
 import { ReactNativeSafeAreaContext } from '@valenced/externals/react-native-safe-area-context'
+import {
+	getModuleDependencies,
+	isModuleInitialized,
+} from '@valenced/modules/metro'
 import { useEffect, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { switchTab } from './navigation'
-import { found, useSettings } from './state'
+import { found, useFoundModules, useSettings } from './state'
 import type { ComponentType, ReactNode } from 'react'
 import type { Badge, Props, Tab } from './state'
 
@@ -58,6 +62,79 @@ function currentUser() {
 	const store = (Stores as Record<string, { getCurrentUser?: () => unknown }>)
 		.UserStore
 	return store?.getCurrentUser?.()
+}
+
+// Long press on You: the account sheet (online status, switch accounts,
+// theme), the same sheet Discord's You bar opens from its avatar, with the
+// same soft haptic. showYouAccountActionSheet is imported by the You bar
+// module, so it is loaded by the time this bar replaces it.
+const ACCOUNT_SHEET =
+	'modules/main_tabs_v2/native/tabs/you/utils/showYouAccountActionSheet.tsx'
+const HAPTIC_MODULES = [
+	'modules/haptics/HapticUtils.native.tsx',
+	'modules/haptics/HapticFeedbackTypes.tsx',
+]
+
+function softHaptic() {
+	let trigger: ((type: unknown) => void) | undefined
+	let soft: unknown
+	for (const path of HAPTIC_MODULES) {
+		const [exports] = lookupModuleWithImportedPath(path) as {
+			triggerHapticFeedback?: (type: unknown) => void
+			HapticFeedbackTypes?: { SOFT?: unknown }
+		}[]
+		trigger ??= exports?.triggerHapticFeedback
+		soft ??= exports?.HapticFeedbackTypes?.SOFT
+	}
+	if (trigger && soft !== undefined) trigger(soft)
+}
+
+type SheetModule = { showYouAccountActionSheet?: () => void }
+
+// Modules whose press handlers lazy-import the account sheet in stock
+// Discord. All of them are initialized once the You bar has rendered.
+const SHEET_IMPORTERS = [
+	'modules/main_tabs_v2/native/you_bar/YouBar.tsx',
+	'modules/main_tabs_v2/native/you_bar/YouBarUser.tsx',
+	'modules/main_tabs_v2/native/you_bar/YouBarAvatar.tsx',
+	'modules/main_tabs_v2/native/you_bar/YouBarAvatarDefault.tsx',
+	'modules/main_tabs_v2/native/you_bar/YouBarNameplate.tsx',
+]
+
+function sheetModule(): SheetModule | undefined {
+	const [exports] = lookupModuleWithImportedPath(ACCOUNT_SHEET) as SheetModule[]
+	if (exports) return exports
+	// Discord initializes showYouAccountActionSheet only from press handlers
+	// this bar replaced, so the module has no id yet. It is a lazy dependency
+	// of one of the modules above: require their few uninitialized
+	// dependencies until the path resolves.
+	let budget = 12
+	for (const path of SHEET_IMPORTERS) {
+		const importer = lookupModuleWithImportedPath(path) as
+			| [unknown, number]
+			| []
+		if (importer[1] === undefined) continue
+		for (const dep of getModuleDependencies(importer[1]) ?? []) {
+			if (isModuleInitialized(dep)) continue
+			if (budget-- <= 0) return
+			try {
+				__r(dep)
+			} catch {
+				// A lazy chunk that failed to load; keep looking.
+			}
+			const [found] = lookupModuleWithImportedPath(
+				ACCOUNT_SHEET,
+			) as SheetModule[]
+			if (found) return found
+		}
+	}
+}
+
+function openAccountSheet() {
+	const show = sheetModule()?.showYouAccountActionSheet
+	if (typeof show !== 'function') return
+	softHaptic()
+	show()
 }
 
 // The tokens module is an ES module; the token tables are on `default`.
@@ -157,6 +234,8 @@ export function TabBar({
 	const insets = ReactNativeSafeAreaContext?.useSafeAreaInsets?.()
 	// Always called, so the hook order is stable even if a module is missing.
 	const settings = useSettings()
+	// Re-render when a module (the badge hook) arrives after the first render.
+	useFoundModules()
 
 	const Home = icon('home')
 	const Bell = icon('bell')
@@ -227,13 +306,21 @@ function TabButton({
 }) {
 	let marker: ReactNode = null
 	if (spec.badge === 'notifications')
-		marker = <NotificationsBadge styles={styles} />
+		// The key remounts the badge when Discord's hook arrives late, so a
+		// mounted instance never has to change which hook it calls.
+		marker = (
+			<NotificationsBadge
+				key={found.badge ? 'live' : 'waiting'}
+				styles={styles}
+			/>
+		)
 	else if (spec.badge === 'home') marker = <MentionsBadge styles={styles} />
 
 	return (
 		<Pressable
 			style={styles.tab}
 			onPress={() => switchTab(spec.tab)}
+			onLongPress={spec.tab === 'profile' ? openAccountSheet : undefined}
 			accessibilityRole="tab"
 			accessibilityLabel={spec.label}
 			accessibilityState={{ selected }}
@@ -256,13 +343,16 @@ function TabButton({
 	)
 }
 
-// Fixed on first use so the hook a mounted badge calls never changes.
-let useBadge: (() => Badge) | undefined
+const NO_BADGE = (): Badge => ({})
 
 // Discord's badge hook lives in its own component, so whatever hooks it runs
-// inside can never shift the hook order of the bar.
+// inside can never shift the hook order of the bar. The hook is captured once
+// per mounted instance (never swapped while mounted, so React's hook order
+// holds); when the module loads late, the key in TabButton remounts this
+// with the real hook instead of keeping the no-op.
 function NotificationsBadge({ styles }: { styles: Styles }) {
-	const badge: Badge = (useBadge ??= found.badge ?? (() => ({})))()
+	const [useBadge] = useState(() => found.badge ?? NO_BADGE)
+	const badge: Badge = useBadge()
 	return badgeView(styles, badge?.value ?? 0, badge?.showDot)
 }
 
