@@ -9,10 +9,7 @@ import {
 	getUserAvatar,
 } from '../lib/client'
 import { channelOverwriteKey, openSheet } from '../lib/navigation'
-import {
-	channelPermissionCategories,
-	formatPermissionName,
-} from '../lib/permissions'
+import { channelPermissionCategories } from '../lib/permissions'
 import {
 	isRoleOverwrite,
 	overwriteStateOf,
@@ -29,7 +26,7 @@ import {
 } from '../lib/stores'
 import { EmptyState, PermissionSheet, roleGlyph } from './common'
 import type { OverwriteState } from '../lib/roles'
-import type { PermissionOverwrite } from '../lib/stores'
+import type { Channel, PermissionOverwrite } from '../lib/stores'
 
 interface ChannelPermissionsSheetProps {
 	channelId: string
@@ -73,7 +70,7 @@ export function ChannelPermissionsSheet({
 
 	const guildId = channel.guild_id
 	const overwrites = getOverwrites(channel).filter(overwrite => {
-		const { allowed, denied } = summarizeOverwrite(overwrite)
+		const { allowed, denied } = summarizeOverwrite(overwrite, channel)
 		return allowed > 0 || denied > 0
 	})
 
@@ -129,6 +126,7 @@ export function ChannelPermissionsSheet({
 							<ChannelOverwriteRow
 								key={overwrite.id}
 								guildId={guildId}
+								channel={channel}
 								overwrite={overwrite}
 								onPress={() => open(overwrite)}
 							/>
@@ -162,14 +160,14 @@ export function ChannelOverwriteSheet({
 			)
 		: undefined
 
-	if (!overwrite)
+	if (!channel || !overwrite)
 		return (
 			<PermissionSheet title="Permissions">
 				<EmptyState title="These permissions are no longer available." />
 			</PermissionSheet>
 		)
 
-	const categories = channelPermissionCategories()
+	const categories = channelPermissionCategories(channel)
 
 	return (
 		<PermissionSheet
@@ -181,7 +179,7 @@ export function ChannelOverwriteSheet({
 					{category.permissions.map(entry => (
 						<TableRow
 							key={entry.name}
-							label={formatPermissionName(entry)}
+							label={entry.label}
 							trailing={stateGlyph(overwriteStateOf(overwrite, entry.flag))}
 						/>
 					))}
@@ -206,6 +204,7 @@ function stateGlyph(state: OverwriteState) {
 
 interface ChannelOverwriteRowProps {
 	guildId: string
+	channel: Channel
 	overwrite: PermissionOverwrite
 	onPress?(): void
 }
@@ -213,12 +212,13 @@ interface ChannelOverwriteRowProps {
 /** One subject's channel overwrite: icon, name, and allow/deny counts. */
 export function ChannelOverwriteRow({
 	guildId,
+	channel,
 	overwrite,
 	onPress,
 }: ChannelOverwriteRowProps) {
 	const { TableRow, Text } = Design
 
-	const summary = summarizeOverwrite(overwrite)
+	const summary = summarizeOverwrite(overwrite, channel)
 	const parts: string[] = []
 	if (summary.allowed) parts.push(`${summary.allowed} allowed`)
 	if (summary.denied) parts.push(`${summary.denied} denied`)
@@ -252,11 +252,7 @@ function subjectIcon(guildId: string, overwrite: PermissionOverwrite) {
 	const user = getUser(overwrite.id)
 	if (Avatar && sizes && user)
 		return (
-			<Avatar
-				user={user}
-				guildId={guildId}
-				size={sizes.REFRESH_MEDIUM_32 ?? sizes.NORMAL}
-			/>
+			<Avatar user={user} guildId={guildId} size={sizes.REFRESH_MEDIUM_32} />
 		)
 
 	const Fallback = getMemberIcon()

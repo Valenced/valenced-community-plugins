@@ -1,9 +1,10 @@
 import { Constants } from '@valenced/discord/common/constants'
-import { getModules } from '@valenced/modules/finders'
-import { withProps } from '@valenced/modules/finders/filters'
+import { lookupModuleWithImportedPath } from '@valenced/discord/utils/modules/finders'
+import { lookupModules } from '@valenced/modules/finders'
+import { withDependencies, withProps } from '@valenced/modules/finders/filters'
 import { api } from '..'
 import { getEveryoneRole, getGuild } from './stores'
-import type { Role } from './stores'
+import type { Channel, Role } from './stores'
 
 export interface PermissionEntry {
 	name: string
@@ -17,10 +18,13 @@ export interface PermissionCategory {
 }
 
 /**
- * Client permission flags; `ADMINISTRATOR` implies every other bit.
+ * ADMINISTRATOR implies every other bit.
  * `initPermissions` resolves the map before use.
  */
 let flags: Record<string, bigint> | undefined
+
+// The catalog is in flags, the grid in names
+let namesByFlag = new Map<bigint, string>()
 
 export function initPermissions() {
 	const map = (
@@ -29,9 +33,15 @@ export function initPermissions() {
 	if (!map)
 		throw new Error('the client Constants.Permissions map is unavailable')
 	flags = map
+
+	const names = new Map<bigint, string>()
+	for (const [name, flag] of Object.entries(map)) {
+		if (!names.has(flag)) names.set(flag, name)
+	}
+	namesByFlag = names
 }
 
-/** One named flag; throws if read before init. */
+//One named flag; throws if read before init
 export function permissionFlagOf(name: string): bigint {
 	if (!flags)
 		throw new Error('permission flags were read before the map resolved')
@@ -41,168 +51,187 @@ export function permissionFlagOf(name: string): bigint {
 	return value
 }
 
-type CategorySpec = [
-	label: string,
-	channelSettable: boolean,
-	entries: [name: string, label: string][],
+const CATALOG_PATH = 'utils/PermissionSpecUtils.tsx'
+
+const ANCHOR_PATHS = [
+	'records/ChannelRecord.tsx',
+	'stores/GuildStore.tsx',
+	// The root aggregator, not discord_common's shared Constants.
+	'Constants.tsx',
 ]
 
-const categorySpecs: CategorySpec[] = [
-	[
-		'General',
-		false,
-		[
-			['ADMINISTRATOR', 'Administrator'],
-			['VIEW_AUDIT_LOG', 'View audit log'],
-			['MANAGE_GUILD', 'Manage server'],
-			['VIEW_GUILD_ANALYTICS', 'View server insights'],
-			['USE_EXTERNAL_APPS', 'Use external apps'],
-		],
-	],
-	[
-		'Text',
-		true,
-		[
-			['SEND_MESSAGES', 'Send messages'],
-			['SEND_MESSAGES_IN_THREADS', 'Send messages in threads'],
-			['MANAGE_MESSAGES', 'Manage messages'],
-			['EMBED_LINKS', 'Embed links'],
-			['ATTACH_FILES', 'Attach files'],
-			['ADD_REACTIONS', 'Add reactions'],
-			['USE_EXTERNAL_EMOJIS', 'Use external emoji'],
-			['USE_EXTERNAL_STICKERS', 'Use external stickers'],
-			['USE_EXTERNAL_SOUNDS', 'Use external sounds'],
-			['SEND_TTS_MESSAGES', 'Send text-to-speech messages'],
-			['SEND_VOICE_MESSAGES', 'Send voice messages'],
-			['MENTION_EVERYONE', 'Mention @everyone, @here, and all roles'],
-			['READ_MESSAGE_HISTORY', 'Read message history'],
-			['PIN_MESSAGES', 'Pin messages'],
-			['BYPASS_SLOWMODE', 'Bypass slowmode'],
-			['MANAGE_OFFICIAL_MESSAGES', 'Manage official messages'],
-		],
-	],
-	[
-		'Voice',
-		true,
-		[
-			['CONNECT', 'Connect'],
-			['SPEAK', 'Speak'],
-			['USE_VAD', 'Use voice activity'],
-			['PRIORITY_SPEAKER', 'Priority speaker'],
-			['STREAM', 'Video, screen share, and stream games'],
-			['USE_SOUNDBOARD', 'Use soundboard'],
-			['REQUEST_TO_SPEAK', 'Request to speak'],
-			['MUTE_MEMBERS', 'Mute members'],
-			['DEAFEN_MEMBERS', 'Deafen members'],
-			['MOVE_MEMBERS', 'Move members'],
-			['SET_VOICE_CHANNEL_STATUS', 'Set voice channel status'],
-		],
-	],
-	[
-		'Channel',
-		true,
-		[
-			['VIEW_CHANNEL', 'View channel'],
-			['MANAGE_CHANNELS', 'Manage channels'],
-			['MANAGE_ROLES', 'Manage roles'],
-			['MANAGE_WEBHOOKS', 'Manage webhooks'],
-			['MANAGE_THREADS', 'Manage threads'],
-			['CREATE_PUBLIC_THREADS', 'Create public threads'],
-			['CREATE_PRIVATE_THREADS', 'Create private threads'],
-			['CREATE_INSTANT_INVITE', 'Create invite'],
-		],
-	],
-	[
-		'Members',
-		false,
-		[
-			['KICK_MEMBERS', 'Kick members'],
-			['BAN_MEMBERS', 'Ban members'],
-			['MODERATE_MEMBERS', 'Timeout members'],
-		],
-	],
-	[
-		'Roles',
-		true,
-		[
-			['CHANGE_NICKNAME', 'Change own nickname'],
-			['MANAGE_NICKNAMES', 'Manage other members’ nicknames'],
-			['MANAGE_GUILD_EXPRESSIONS', 'Manage server emoji and stickers'],
-			['CREATE_GUILD_EXPRESSIONS', 'Create server emoji and stickers'],
-			['USE_EMBEDDED_ACTIVITIES', 'Use activities'],
-		],
-	],
-	[
-		'Advanced',
-		true,
-		[
-			[
-				'VIEW_CREATOR_MONETIZATION_ANALYTICS',
-				'View role subscription insights',
-			],
-			['SEND_POLLS', 'Create polls'],
-			['USE_APPLICATION_COMMANDS', 'Use application commands'],
-			['CREATE_EVENTS', 'Create events'],
-			['MANAGE_EVENTS', 'Manage events'],
-		],
-	],
-]
+//Initializing modules runs their factories; stop before touching strangers
+const MAX_CANDIDATES = 3
 
-function buildCategories(channelSettableOnly = false): PermissionCategory[] {
-	const all = flags
-	if (!all)
-		throw new Error('permission flags were read before the map resolved')
+interface PermissionSpecItem {
+	title: string
+	description?: unknown
+	flag?: bigint | null
+	isExperimental?: boolean
+}
 
-	const claimed = new Set<bigint>()
-	const categories: PermissionCategory[] = []
+interface PermissionSpecSection {
+	title: string
+	description?: string
+	permissions?: PermissionSpecItem[]
+}
 
-	for (const [label, channelSettable, entries] of categorySpecs) {
-		if (channelSettableOnly && !channelSettable) continue
-		const permissions: PermissionEntry[] = []
-		for (const [name, entryLabel] of entries) {
-			const flag = all[name]
-			if (flag === undefined) continue
-			claimed.add(flag)
-			permissions.push({ name, flag, label: entryLabel })
-		}
-		if (permissions.length) categories.push({ label, permissions })
+interface PermissionCatalog {
+	generateGuildPermissionSpec(guild: unknown): PermissionSpecSection[]
+	generateChannelPermissionSpec(
+		guildId: string,
+		channel: unknown,
+		options?: unknown,
+		extra?: unknown,
+	): PermissionSpecSection[]
+	getGuildPermissionSpecMap(guild: unknown): Record<string, PermissionSpecItem>
+}
+
+let catalog!: PermissionCatalog
+let catalogError = ''
+
+function pathId(path: string) {
+	const result = lookupModuleWithImportedPath(path)
+	return result.length === 2 ? result[1] : undefined
+}
+
+function pickCatalog(exports: unknown): PermissionCatalog | undefined {
+	for (const candidate of [
+		exports,
+		(exports as { default?: unknown } | undefined)?.default,
+	]) {
+		if (!candidate || typeof candidate !== 'object') continue
+		const value = candidate as Partial<PermissionCatalog>
+		if (
+			typeof value.generateGuildPermissionSpec === 'function' &&
+			typeof value.generateChannelPermissionSpec === 'function' &&
+			typeof value.getGuildPermissionSpecMap === 'function'
+		)
+			return value as PermissionCatalog
+	}
+	return undefined
+}
+
+//initialize the single match, prove it by path
+function attemptCatalog(): boolean {
+	const anchors = ANCHOR_PATHS.map(pathId).filter(
+		(id): id is number => id !== undefined,
+	)
+	if (anchors.length < ANCHOR_PATHS.length) {
+		catalogError = `resolved ${anchors.length}/${ANCHOR_PATHS.length} anchors`
+		return false
 	}
 
-	// Any client flag the curated list does not name yet still renders here.
-	if (!channelSettableOnly) {
-		const leftovers: PermissionEntry[] = []
-		for (const [name, flag] of Object.entries(all)) {
-			if (claimed.has(flag)) continue
-			claimed.add(flag)
-			leftovers.push({ name, flag, label: name })
+	const filter = withProps<PermissionCatalog>(
+		'generateGuildPermissionSpec',
+		'generateChannelPermissionSpec',
+		'getGuildPermissionSpecMap',
+	).and(withDependencies(withDependencies.partial(anchors)))
+
+	let tried = 0
+
+	try {
+		for (const [exports, id] of lookupModules(filter, {
+			cached: false,
+			initialize: true,
+		})) {
+			tried++
+
+			if (pathId(CATALOG_PATH) === id) {
+				const found = pickCatalog(exports)
+				if (!found) {
+					catalogError = `module ${id} has no catalog exports`
+					return false
+				}
+				catalog = found
+				catalogError = ''
+				return true
+			}
+
+			if (tried >= MAX_CANDIDATES) break
 		}
-		if (leftovers.length) {
-			categories.push({ label: 'Other', permissions: leftovers })
+	} catch (error) {
+		catalogError = String(error)
+		return false
+	}
+
+	catalogError = `${tried} candidate(s), none matched ${CATALOG_PATH}`
+	return false
+}
+
+export function resolvePermissionCatalog() {
+	if (attemptCatalog()) return
+	throw new Error(`${CATALOG_PATH} could not be resolved: ${catalogError}`)
+}
+
+function toCategories(sections: PermissionSpecSection[]): PermissionCategory[] {
+	const categories: PermissionCategory[] = []
+
+	for (const section of sections) {
+		const permissions: PermissionEntry[] = []
+
+		for (const item of section.permissions ?? []) {
+			// Discord emits `{ flag: null }` for rows that are not a permission.
+			if (!item || item.flag === null || item.flag === undefined) continue
+
+			const name = namesByFlag.get(item.flag)
+			if (!name) continue
+
+			permissions.push({ name, flag: item.flag, label: item.title })
 		}
+
+		if (permissions.length)
+			categories.push({ label: section.title, permissions })
 	}
 
 	return categories
 }
 
-let categories: PermissionCategory[] | undefined
-let channelCategories: PermissionCategory[] | undefined
+function buildGuildCategories(guildId: string): PermissionCategory[] {
+	const guild = getGuild(guildId)
+	if (!guild) return []
 
-/** Permission list in client order; builds once after init. */
-export function permissionCategories(): PermissionCategory[] {
-	return (categories ??= buildCategories())
+	try {
+		return toCategories(catalog.generateGuildPermissionSpec(guild))
+	} catch (error) {
+		api?.plugin.reportError(error)
+		return []
+	}
 }
 
-/** Categories a channel overwrite can set; drops General and Members. */
-export function channelPermissionCategories(): PermissionCategory[] {
-	return (channelCategories ??= buildCategories(true))
+let guildCache: { key: string; categories: PermissionCategory[] } | undefined
+
+/** Permission list in client order; the catalog is guild-feature gated. */
+export function permissionCategories(guildId: string): PermissionCategory[] {
+	if (guildCache?.key === guildId) return guildCache.categories
+
+	const categories = buildGuildCategories(guildId)
+	guildCache = { key: guildId, categories }
+	return categories
 }
 
-/** Every channel-settable permission, category order kept. */
-export function channelPermissionEntries(): PermissionEntry[] {
-	return channelPermissionCategories().flatMap(category => category.permissions)
+//Every permission this channel type can set
+export function channelPermissionCategories(
+	channel: Channel,
+): PermissionCategory[] {
+	try {
+		return toCategories(
+			catalog.generateChannelPermissionSpec(channel.guild_id, channel),
+		)
+	} catch (error) {
+		api?.plugin.reportError(error)
+		return []
+	}
 }
 
-/** Guild-level effective bits: every role, @everyone, and owner-implicit admin. */
+//Every channel-settable permission, category order kept
+export function channelPermissionEntries(channel: Channel): PermissionEntry[] {
+	return channelPermissionCategories(channel).flatMap(
+		category => category.permissions,
+	)
+}
+
+//Guild-level bits: every role, @everyone, and owner-implicit admin
 export function effectivePermissions(
 	guildId: string,
 	userId: string,
@@ -239,39 +268,4 @@ export function permissionProbe(bits: unknown) {
 
 	return (name: string) =>
 		administrator || hasFlag(value, permissionFlagOf(name))
-}
-
-interface PermissionNamesModule {
-	getPermissionName(flag: bigint): string
-}
-
-let resolvePermissionName: (() => ((flag: bigint) => string) | null) | undefined
-
-/** Client-localized permission name; a missing module keeps local labels. */
-function getPermissionName(): ((flag: bigint) => string) | null {
-	if (!resolvePermissionName) {
-		let resolved: ((flag: bigint) => string) | null = null
-		getModules(
-			withProps<PermissionNamesModule>('getPermissionName'),
-			module => {
-				resolved = module.getPermissionName
-			},
-			{ max: 1 },
-		)
-		resolvePermissionName = () => resolved
-	}
-	return resolvePermissionName()
-}
-
-export function formatPermissionName(entry: PermissionEntry): string {
-	const getName = getPermissionName()
-	if (getName) {
-		try {
-			const localized = getName(entry.flag)
-			if (localized) return localized
-		} catch {
-			// Unknown flag: fall through to the local label.
-		}
-	}
-	return entry.label
 }

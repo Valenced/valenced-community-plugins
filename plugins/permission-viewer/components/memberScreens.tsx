@@ -40,7 +40,10 @@ export function UserPermissionsSheet({
 					{roles.length ? (
 						<MemberRoles guildId={guildId} roles={roles} />
 					) : null}
-					<PermissionGrid hasPermission={permissionProbe(permissions)} />
+					<PermissionGrid
+						guildId={guildId}
+						hasPermission={permissionProbe(permissions)}
+					/>
 				</>
 			)}
 		</PermissionSheet>

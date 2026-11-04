@@ -5,7 +5,7 @@ import {
 	resolveRoleSort,
 	resolveUserUi,
 } from './lib/client'
-import { initPermissions } from './lib/permissions'
+import { initPermissions, resolvePermissionCatalog } from './lib/permissions'
 import { resolveRoleItem } from './lib/roleItem'
 import { resolveRoleMembersSheet } from './lib/roleMembers'
 import { registerRoutes } from './lib/routes'
@@ -29,9 +29,10 @@ export default plugin({
 			api = undefined
 		})
 
-		// Rows read this map, so a missing client map stops the plugin here.
+		// Rows read the flags and the client catalog, so either failure stops here.
 		try {
 			initPermissions()
+			resolvePermissionCatalog()
 		} catch (error) {
 			plugin.reportError(error)
 			plugin.disable()

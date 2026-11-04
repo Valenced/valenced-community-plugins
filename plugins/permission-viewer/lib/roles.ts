@@ -11,7 +11,7 @@ import {
 	getUser,
 	shouldFetchRoleMemberCounts,
 } from './stores'
-import type { PermissionOverwrite, Role } from './stores'
+import type { Channel, PermissionOverwrite, Role } from './stores'
 
 // Role counts from `GET /guilds/:id/roles/member-counts`, cached 120s.
 // The member-list fallback is used only when the list is complete.
@@ -162,10 +162,11 @@ export interface OverwriteSummary {
 /** Granted and denied channel permission counts; a bit in both masks is a deny. */
 export function summarizeOverwrite(
 	overwrite: PermissionOverwrite,
+	channel: Channel,
 ): OverwriteSummary {
 	let allowed = 0
 	let denied = 0
-	for (const entry of channelPermissionEntries()) {
+	for (const entry of channelPermissionEntries(channel)) {
 		if (hasFlag(overwrite.deny, entry.flag)) denied++
 		else if (hasFlag(overwrite.allow, entry.flag)) allowed++
 	}

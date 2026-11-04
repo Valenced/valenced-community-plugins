@@ -120,9 +120,6 @@ export function RoleItemWithMenu({
 	guildId,
 	disableInteraction,
 }: RoleItemWithMenuProps) {
-	// A pill without a role would throw inside the client's screen.
-	if (!role) return null
-
 	// Onboarding draws pills as decoration, so no menu.
 	if (disableInteraction) return <Pill role={role} guildId={guildId} />
 

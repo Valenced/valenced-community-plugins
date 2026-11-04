@@ -75,7 +75,10 @@ export function RolePermissionsSheet({
 			subtitle={role && role.id === guildId ? '@everyone' : undefined}
 		>
 			{role ? (
-				<PermissionGrid hasPermission={permissionProbe(role.permissions)} />
+				<PermissionGrid
+					guildId={guildId}
+					hasPermission={permissionProbe(role.permissions)}
+				/>
 			) : (
 				<EmptyState title="This role is no longer available." />
 			)}

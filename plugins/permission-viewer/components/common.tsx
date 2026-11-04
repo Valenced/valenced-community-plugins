@@ -1,7 +1,7 @@
 import { Design } from '@valenced/discord/design'
 import { StyleSheet } from 'react-native'
 import { getGroupIcon, getRoleIcon } from '../lib/client'
-import { formatPermissionName, permissionCategories } from '../lib/permissions'
+import { permissionCategories } from '../lib/permissions'
 import { isEveryoneRole } from '../lib/roles'
 import type { ReactNode } from 'react'
 import type { PermissionCategory } from '../lib/permissions'
@@ -62,13 +62,15 @@ export function roleGlyph(guildId: string, role: Role | undefined) {
 
 interface PermissionGridProps {
 	hasPermission(name: string): boolean
+	guildId: string
 	categories?: PermissionCategory[]
 }
 
 /** Permission bitfield as read-only client checkbox groups. */
 export function PermissionGrid({
 	hasPermission,
-	categories = permissionCategories(),
+	guildId,
+	categories = permissionCategories(guildId),
 }: PermissionGridProps) {
 	const { TableCheckboxRow, TableRowGroup } = Design
 
@@ -79,7 +81,7 @@ export function PermissionGrid({
 					{category.permissions.map(entry => (
 						<TableCheckboxRow
 							key={entry.name}
-							label={formatPermissionName(entry)}
+							label={entry.label}
 							value={entry.name}
 							checked={hasPermission(entry.name)}
 							disabled
