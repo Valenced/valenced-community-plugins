@@ -3,7 +3,7 @@
 	"id": "dev.tralwdwd.action-sheet-patcher",
 	"name": "tralwdwd's action sheet patcher library",
 	"description": "Provides a library to easily patch action sheets.",
-	"author": "tralwdwdd <1278723517436788897> (https://github.com/tralwdwd \"Github\")",
+	"author": "tralwdwdd <1278723517436788897> (https://github.com/tralwdwd \"GitHub\")",
 	"version": "1.0.0",
 	"icon": "FileIcon",
 	"dependencies": {

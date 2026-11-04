@@ -70,7 +70,7 @@ type ActionSheetResultWithChildren = {
 	}
 }
 
-type MemoSheet = React.MemoExoticComponent<React.ComponentType<any>>
+type MemoSheet = React.MemoExoticComponent<any>
 
 type ActionSheetModule = {
 	default: React.FC | MemoSheet
@@ -113,7 +113,6 @@ function patchMemoSheet(
 	cleanup: PluginCleanupApi,
 	patches: ActionSheetPatchConfig[],
 ) {
-	// @ts-expect-error
 	const unpatch = after(module.default as MemoSheet, 'type', tree => {
 		for (const patch of patches) {
 			const actionGroups =

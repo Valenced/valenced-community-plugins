@@ -1,25 +1,21 @@
 import { React } from '@valenced/react'
+import { Icons } from '../../modules/misc'
 import { jumpToTop } from '../../utils'
-import { UpsideDown } from './UpsideDown'
+import type { DiscordModules } from '@valenced/discord/types'
 
 type JumpToTopButtonProps = {
-	JumpToPresentButton: React.ReactElement
+	JumpToPresentIconButton: React.ReactElement<DiscordModules.Components.IconButtonProps>
 	channelId: string
 	isDifferentChannel: boolean
 }
 
 export function JumpToTopButton({
-	JumpToPresentButton,
+	JumpToPresentIconButton,
 	channelId,
 	isDifferentChannel,
 }: JumpToTopButtonProps) {
-	return (
-		<UpsideDown>
-			{React.cloneElement(JumpToPresentButton, {
-				// @ts-expect-error
-				...JumpToPresentButton.props,
-				onPress: () => jumpToTop({ isDifferentChannel, channelId }),
-			})}
-		</UpsideDown>
-	)
+	return React.cloneElement(JumpToPresentIconButton, {
+		icon: Icons.ArrowLargeUpIcon,
+		onPress: () => jumpToTop({ isDifferentChannel, channelId }),
+	})
 }

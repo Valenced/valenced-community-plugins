@@ -1,11 +1,12 @@
-import { getAssetIdByName } from '@valenced/assets'
 import { Design } from '@valenced/discord/design'
 import { getModules } from '@valenced/modules/finders'
 import { withName } from '@valenced/modules/finders/filters'
 import { instead } from '@valenced/patcher'
 import { ChannelType } from '@vencord/discord-types/enums'
+import { Icons } from '../modules/misc'
 import { JumpToTopButton } from '../ui/components/JumpToTopButton'
 import { Stores } from '../utils'
+import type { DiscordModules } from '@valenced/discord/types'
 import type { PluginApi, PluginCleanupApi } from '@valenced/plugins/types'
 
 export function patchJumpToPresent({ cleanup }: PluginApi) {
@@ -20,6 +21,9 @@ export function patchJumpToPresent({ cleanup }: PluginApi) {
 	)
 }
 
+type IconButtonElement =
+	React.ReactElement<DiscordModules.Components.IconButtonProps>
+
 const patch = (JTPButton: any, cleanup: PluginCleanupApi) => {
 	const { ChannelStore } = Stores
 
@@ -29,8 +33,8 @@ const patch = (JTPButton: any, cleanup: PluginCleanupApi) => {
 
 			if (ret == null) return null
 
-			const JumpToPresentButton = ret.props.children as React.ReactElement
-			if (!isJumpToPresentButton(JumpToPresentButton)) return ret
+			const JumpToPresentIconButton = ret.props.children as IconButtonElement
+            if (!isJumpToPresentButton(JumpToPresentIconButton)) return ret
 
 			const { type: channelType } = ChannelStore.getChannel(props.channelId)
 			// Voice channel text counts as different channel
@@ -39,11 +43,11 @@ const patch = (JTPButton: any, cleanup: PluginCleanupApi) => {
 			ret.props.children = (
 				<Design.Stack>
 					<JumpToTopButton
-						JumpToPresentButton={JumpToPresentButton}
+						JumpToPresentIconButton={JumpToPresentIconButton}
 						channelId={props.channelId}
 						isDifferentChannel={isNotCurrentChannel}
 					/>
-					{JumpToPresentButton}
+					{JumpToPresentIconButton}
 				</Design.Stack>
 			)
 
@@ -52,9 +56,7 @@ const patch = (JTPButton: any, cleanup: PluginCleanupApi) => {
 	)
 }
 
-function isJumpToPresentButton(button: React.ReactElement) {
-	const ArrowIconId = getAssetIdByName('ArrowLargeDownIcon')
-
-	// @ts-expect-error
-	return button.props?.icon === ArrowIconId
+function isJumpToPresentButton(button: IconButtonElement) {
+    // Discord uses JumpToPresentButton for the close button on voice channels
+    return button.props?.icon === Icons.ArrowLargeDownIcon;
 }

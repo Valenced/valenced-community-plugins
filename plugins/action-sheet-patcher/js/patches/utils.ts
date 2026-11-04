@@ -5,7 +5,8 @@ type ActionGroupFinder = (
 ) => React.ReactElement[] | undefined
 
 type PropsWithChildren = {
-	children: React.ReactElement[]
+	children: React.ReactElement<PropsWithChildren>[]
+	label?: string
 }
 
 const FINDERS: ActionGroupFinder[] = [
@@ -33,7 +34,6 @@ const FINDERS: ActionGroupFinder[] = [
 					!!(
 						node as React.ReactElement<PropsWithChildren>
 					)?.props?.children?.find?.(
-						// @ts-expect-error
 						child => child.props?.children?.[0]?.props?.label,
 					),
 			) as React.ReactElement<PropsWithChildren> | undefined

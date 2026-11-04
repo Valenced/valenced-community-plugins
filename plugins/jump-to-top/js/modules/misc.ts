@@ -1,3 +1,4 @@
+import { getAssetIdByName } from '@valenced/assets'
 import { ConstantsModuleId } from '@valenced/discord/common/constants'
 import { lookupModule } from '@valenced/modules/finders'
 import { withDependencies, withProps } from '@valenced/modules/finders/filters'
@@ -23,3 +24,13 @@ export let ChannelRouter: ChannelRouter = proxify(
 	},
 	{ hint: {} },
 )!
+
+export const Icons = proxify(
+	() => {
+		return {
+			ArrowLargeDownIcon: getAssetIdByName('ArrowLargeDownIcon')!,
+			ArrowLargeUpIcon: getAssetIdByName('ArrowLargeUpIcon')!,
+		}
+	},
+	{ cache: true, hint: {} },
+)

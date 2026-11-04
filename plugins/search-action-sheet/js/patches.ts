@@ -39,7 +39,7 @@ export function patchSearchListRow({ cleanup }: PluginApi) {
 		getModules(withProps('SearchListRow'), SearchListRowModule => {
 			cleanup(
 				instead(
-					SearchListRowModule?.SearchListRow,
+					SearchListRowModule!.SearchListRow,
 					'type',
 					([props], original) => {
 						const ret = original(props)
@@ -84,7 +84,7 @@ export function patchMessageActionSheet({ cleanup, unscoped }: PluginApi) {
 			'MessageLongPressActionSheet',
 			config => {
 				if (config.actionSheetSource === 'Preview') {
-					config.actionSheetSource = void 0
+					config.actionSheetSource = undefined
 					config.canAddNewReactions = true
 				}
 			},

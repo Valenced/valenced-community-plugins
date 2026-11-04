@@ -1,8 +1,7 @@
-import { getAssetIdByName } from '@valenced/assets'
 import { ActionSheetActionCreators } from '@valenced/discord/actions'
 import { Design } from '@valenced/discord/design'
 import { ChannelType } from '@vencord/discord-types/enums'
-import { UpsideDown } from '../ui/components/UpsideDown'
+import { Icons } from '../modules/misc'
 import { jumpToTop, Stores } from '../utils'
 import type { PluginApi } from '@valenced/plugins/types'
 import type { Channel } from '@vencord/discord-types'
@@ -44,11 +43,7 @@ export function patchActionSheet({ cleanup, unscoped }: PluginApi) {
 						<Design.ActionSheetRow
 							label="Jump To Top"
 							icon={
-								<UpsideDown>
-									<Design.ActionSheetRow.Icon
-										source={getAssetIdByName('ArrowLargeDownIcon')!}
-									/>
-								</UpsideDown>
+								<Design.ActionSheetRow.Icon source={Icons.ArrowLargeUpIcon} />
 							}
 							onPress={() => {
 								jumpToTop({
@@ -73,11 +68,7 @@ export function patchActionSheet({ cleanup, unscoped }: PluginApi) {
 						<Design.ActionSheetRow
 							label="Jump To Top"
 							icon={
-								<UpsideDown>
-									<Design.ActionSheetRow.Icon
-										source={getAssetIdByName('ArrowLargeDownIcon')!}
-									/>
-								</UpsideDown>
+								<Design.ActionSheetRow.Icon source={Icons.ArrowLargeUpIcon} />
 							}
 							onPress={() => {
 								jumpToTop({
@@ -106,11 +97,7 @@ export function patchActionSheet({ cleanup, unscoped }: PluginApi) {
 						<Design.ActionSheetRow
 							label="Jump To Top"
 							icon={
-								<UpsideDown>
-									<Design.ActionSheetRow.Icon
-										source={getAssetIdByName('ArrowLargeDownIcon')!}
-									/>
-								</UpsideDown>
+								<Design.ActionSheetRow.Icon source={Icons.ArrowLargeUpIcon} />
 							}
 							onPress={() => {
 								jumpToTop({
