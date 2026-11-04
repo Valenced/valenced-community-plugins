@@ -1,7 +1,7 @@
 {
 	"format": 1,
-	"id": "thororen.new-guild-settings",
-	"name": "New Guild Settings",
+	"id": "thororen.new-server-defaults",
+	"name": "New Server Defaults",
 	"description": "Automatically mutes new servers and changes their notification and channel settings when you join them.",
 	"author": "thororen <848339671629299742> (https://www.thororen.com \"Website\") (https://github.com/thororen1234 \"GitHub\")",
 	"contributors": [
