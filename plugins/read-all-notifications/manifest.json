@@ -4,11 +4,9 @@
 	"name": "Read All Notifications",
 	"description": "Mark unread server channels as read with a button under your DMs in the server list.",
 	"author": "NexzaDev (https://github.com/NexzaDev \"GitHub\")",
-	"contributors": [
-		"kemo (https://github.com/kem0x \"GitHub\")"
-	],
+	"contributors": ["kemo (https://github.com/kem0x \"GitHub\")"],
 	"icon": "ChatCheckIcon",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"dependencies": {
 		"valenced.api": {
 			"version": ">=1 <2"

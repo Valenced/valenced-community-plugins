@@ -1,66 +1,59 @@
 import { getAssetIdByName } from '@valenced/assets'
 import { Design } from '@valenced/discord/design'
+import { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
+import { getComponentName, isComponent, isRecord } from './guards'
+import { acquireButtonId, releaseButton, reportButtonHeight } from './layout'
 import { markAllAsRead } from './unread'
-import type { ComponentType } from 'react'
+import type { LayoutChangeEvent } from 'react-native'
+import type { AnyComponent, AnyProps } from './guards'
 
 const { IconButton } = Design
 
 const EntryComponentName = 'GuildsBarAnimatedItemWrapper'
 const DirectMessagesLabel = 'Direct Messages'
-
-type EntryProps = Record<string, unknown>
-type EntryComponent = ComponentType<EntryProps>
-
-interface ComponentLike {
-	displayName?: unknown
-	name?: unknown
-	type?: unknown
-	render?: unknown
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null
-}
-
-function isComponent(value: unknown): value is EntryComponent {
-	return typeof value === 'function' || isRecord(value)
-}
-
-function getComponentName(type: unknown): string | undefined {
-	if (!isComponent(type)) return undefined
-
-	const { displayName, name, type: inner, render } = type as ComponentLike
-	if (typeof displayName === 'string' && displayName) return displayName
-	if (typeof name === 'string' && name) return name
-
-	return getComponentName(inner) ?? getComponentName(render)
-}
+const ContainerMarginTop = 6
+const ContainerMarginBottom = 2
 
 function ReadAllButton() {
+	const id = useButtonId()
+
+	const onLayout = (event: LayoutChangeEvent) => {
+		const { height } = event.nativeEvent.layout
+		reportButtonHeight(id, height + ContainerMarginTop + ContainerMarginBottom)
+	}
+
 	return (
-		<View style={styles.container}>
+		<View style={styles.container} onLayout={onLayout}>
 			<IconButton
 				accessibilityLabel="Mark all as read"
 				variant="secondary"
 				size="md"
-				icon={getAssetIdByName('ChatCheckIcon')}
+				icon={getAssetIdByName('ChatCheckIcon')!}
 				onPress={markAllAsRead}
 			/>
 		</View>
 	)
 }
 
+function useButtonId(): number {
+	const [id] = useState(acquireButtonId)
+
+	useEffect(() => () => releaseButton(id), [id])
+
+	return id
+}
+
 export function createDirectMessagesEntryPatcher() {
-	const wrappers = new WeakMap<object, EntryComponent>()
+	const wrappers = new WeakMap<object, AnyComponent>()
 	const wrapperTypes = new WeakSet<object>()
 	let renderingWrapper = false
 
-	function wrap(Original: EntryComponent): EntryComponent {
+	function wrap(Original: AnyComponent): AnyComponent {
 		const existing = wrappers.get(Original)
 		if (existing) return existing
 
-		function ReadAllDmWrapper(props: EntryProps) {
+		function ReadAllDmWrapper(props: AnyProps) {
 			renderingWrapper = true
 			try {
 				return (
@@ -79,25 +72,26 @@ export function createDirectMessagesEntryPatcher() {
 		return ReadAllDmWrapper
 	}
 
-	function isDirectMessagesEntry(
-		type: unknown,
-		props: unknown,
-	): type is EntryComponent {
+	function isEntryType(type: unknown): type is AnyComponent {
 		return (
 			!renderingWrapper &&
 			isComponent(type) &&
 			!wrapperTypes.has(type) &&
-			isRecord(props) &&
-			props.label === DirectMessagesLabel &&
 			getComponentName(type) === EntryComponentName
 		)
+	}
+
+	function isDirectMessagesProps(props: unknown): props is AnyProps {
+		return isRecord(props) && props.label === DirectMessagesLabel
 	}
 
 	return function patchEntry<Args extends [unknown, unknown?, ...unknown[]]>(
 		args: Args,
 	): Args {
 		const [type, props] = args
-		if (isDirectMessagesEntry(type, props)) args[0] = wrap(type)
+		if (!isDirectMessagesProps(props) || !isEntryType(type)) return args
+
+		args[0] = wrap(type)
 		return args
 	}
 }
@@ -105,7 +99,7 @@ export function createDirectMessagesEntryPatcher() {
 const styles = StyleSheet.create({
 	container: {
 		alignItems: 'center',
-		marginBottom: 2,
-		marginTop: 6,
+		marginBottom: ContainerMarginBottom,
+		marginTop: ContainerMarginTop,
 	},
 })

@@ -42,17 +42,15 @@ function toChannel(entry: ChannelEntry): ChannelRef {
 }
 
 function requireStores() {
-	const guilds = Stores.GuildStore as
-		| DiscordModules.Flux.Store<GuildStoreApi>
+	const guilds = Stores.GuildStore as unknown as GuildStoreApi | undefined
+	const channels = Stores.GuildChannelStore as unknown as
+		| GuildChannelStoreApi
 		| undefined
-	const channels = Stores.GuildChannelStore as
-		| DiscordModules.Flux.Store<GuildChannelStoreApi>
+	const readState = Stores.ReadStateStore as unknown as
+		| ReadStateStoreApi
 		| undefined
-	const readState = Stores.ReadStateStore as
-		| DiscordModules.Flux.Store<ReadStateStoreApi>
-		| undefined
-	const threads = Stores.ActiveJoinedThreadsStore as
-		| DiscordModules.Flux.Store<ThreadStoreApi>
+	const threads = Stores.ActiveJoinedThreadsStore as unknown as
+		| ThreadStoreApi
 		| undefined
 
 	if (!guilds || !channels || !readState) {
