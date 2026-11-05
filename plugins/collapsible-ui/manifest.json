@@ -1,0 +1,20 @@
+{
+	"format": 1,
+	"id": "dev.benjii.collapsible-ui",
+	"name": "Collapsible UI",
+	"description": "Collapse channel headers, the You bar and chat box with drag strips, and the guildbar with swipes.",
+	"author": "Benjii <463702169443368970>",
+	"icon": "SettingsIcon",
+	"version": "1.0.4",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
