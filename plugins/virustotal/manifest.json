@@ -1,0 +1,15 @@
+{
+    "format": 1,
+    "id": "com.karimistcool.virustotal-scanner",
+    "name": "VirusTotal Scanner",
+    "description": "Scan links with VirusTotal via the long-press menu.",
+    "author": "KarimIstCool",
+    "version": "1.0.0",
+    "dependencies": {
+        "valenced.api": { "version": ">=1 <2" },
+        "discord": { "version": "*" }
+    },
+    "dist": {
+        "script": "index.js"
+    }
+}
