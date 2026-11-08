@@ -1,0 +1,14 @@
+{
+	"format": 1,
+	"id": "dead1nsane.fira-code",
+	"name": "Fira Code",
+	"description": "Free monospace font with programming ligatures.",
+	"author": "Rairof (https://github.com/Rairof)",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": { "version": ">=1 <2" },
+		"discord": { "version": "*" },
+		"valenced.api.themes": { "version": "*" }
+	},
+	"dist": { "script": "index.js" }
+}

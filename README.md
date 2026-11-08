@@ -84,10 +84,32 @@ This repository comes **pre-installed with Valenced**. If you want to use these 
 
 ## 🎨 Themes
 
-<!-- THEMES_TABLE_BEGIN -->
+Themes, fonts, and icon packs can be applied from **Settings** > **Valenced** > **Themes**.
+
+### Color Themes
 
 | Name | Description | Authors | Version |
 | --- | --- | --- | --- |
-| [Google Sans Flex](themes/google-sans-flex) | Replaces Discord's gg sans with Google Sans Flex. | Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub") | 1.0.0 |
+| [RBW AMOLED](themes/rbw-amoled) | AMOLED black base with red, grey & white accents. Best with Gantari font. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
 
-<!-- THEMES_TABLE_END -->
+### Font Packs
+
+| Name | Description | Authors | Version |
+| --- | --- | --- | --- |
+| [Cabin](themes/cabin) | Humanist sans-serif with expressive curves. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+| [Fira Code](themes/fira-code) | Monospace with programming ligatures. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+| [Gantari](themes/gantari) | Clean geometric sans-serif font. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+| [Google Sans Flex](themes/google-sans-flex) | Replaces Discord's gg sans with Google Sans Flex. | Palm <629368283354628116> (https://github.com/sponsors/PalmDevs "Donations") (https://palmdevs.me "Website") (https://github.com/PalmDevs "GitHub") | 1.0.0 |
+| [IBM Plex Mono](themes/ibm-plex-mono) | Monospace typeface from IBM. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+| [Instrument Sans](themes/instrument-sans) | Modern geometric sans-serif. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+| [JetBrains Mono](themes/jetbrains-mono) | Developer-focused monospace font. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+| [Linotte](themes/linotte) | Rounded sans-serif with a friendly personality. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+| [Playfair Display](themes/playfair) | Elegant serif with high contrast and stylish details. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+| [Quicksand](themes/quicksand) | Rounded geometric sans-serif. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+| [Source Code Pro](themes/source-code-pro) | Clean monospace for code and text. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+| [Space Mono](themes/space-mono) | Monospace typeface for display and code. | im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane "GitHub") | 1.0.0 |
+
+### Icon Packs
+
+| Name | Description | Authors | Version |
+| --- | --- | --- | --- |
