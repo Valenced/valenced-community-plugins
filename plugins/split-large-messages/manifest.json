@@ -1,0 +1,21 @@
+{
+	"format": 1,
+	"id": "purpleeyez.split-large-messages",
+	"name": "Split Large Messages",
+	"description": "Automatically splits messages exceeding Discord's character limit into multiple messages.",
+	"author": "Purple_Ξye™ <646535537334812682> (https://github.com/Purple-EyeZ \"GitHub\")",
+	"contributors": ["sunnie <406028027768733696>"],
+	"icon": "ChatIcon",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
