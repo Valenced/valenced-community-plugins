@@ -1,0 +1,6 @@
+This plugin adapts code from il1ll's RevengePlugins:
+
+Source: https://github.com/il1ll/RevengePlugins/tree/master/plugins/SilentEdit
+License: CC0 1.0 Universal (https://creativecommons.org/publicdomain/zero/1.0/)
+
+The silent edit mechanism (posting a new message and deleting the original instead of editing it) is adapted from the SilentEdit plugin by coder.gg.

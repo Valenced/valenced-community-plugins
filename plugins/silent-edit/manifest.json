@@ -1,0 +1,23 @@
+{
+	"format": 1,
+	"id": "hakuxyz.silent-edit",
+	"name": "Silent Edit",
+	"description": "Edit messages without showing the (edited) indicator.",
+	"author": "hakuxyz (https://github.com/hakuxyz \"GitHub\")",
+	"contributors": [
+		"coder.gg <1099039269391171765> (https://github.com/il1ll \"GitHub\")"
+	],
+	"version": "1.0.0",
+	"icon": "PencilIcon",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
