@@ -1,0 +1,19 @@
+{
+	"format": 1,
+	"id": "kacpi4243.spoiler-all-media",
+	"name": "Spoiler All Media",
+	"description": "Spoiler all media in a message you are sending with one button press",
+	"author": "kacpi4243 (https://github.com/kacpi4243 \"GitHub\")",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
