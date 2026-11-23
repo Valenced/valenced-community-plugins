@@ -1,5 +1,5 @@
 import { Stores } from '@valenced/discord/flux'
-import { getModules, lookupModule } from '@valenced/modules/finders'
+import { getModules } from '@valenced/modules/finders'
 import { withProps } from '@valenced/modules/finders/filters'
 import { after, instead } from '@valenced/patcher'
 import SettingsComponent from './settings'
@@ -61,6 +61,12 @@ interface Invite {
 }
 
 let storage: JsonStorage<Settings>
+let GuildNotificationSettingsActionCreators:
+	| GuildNotificationSettingsActionCreators
+	| undefined
+let OptIn: OptInModule | undefined
+let OptInOnboardingUtils: OptInOnboardingUtils | undefined
+let ChannelCollapseActionCreators: ChannelCollapseActionCreators | undefined
 
 export default plugin<{ jsonStorage: Settings }>({
 	jsonStorage: {
@@ -71,6 +77,32 @@ export default plugin<{ jsonStorage: Settings }>({
 		storage = jsonStorage
 
 		cleanup(
+			getModules(
+				withProps<GuildNotificationSettingsActionCreators>(
+					'updateGuildNotificationSettings',
+				),
+				mod => {
+					GuildNotificationSettingsActionCreators = mod
+				},
+			),
+			getModules(withProps<OptInModule>('isOptInEnabledForGuild'), mod => {
+				OptIn = mod
+			}),
+			getModules(
+				withProps<OptInOnboardingUtils>('toggleShowAllChannels'),
+				mod => {
+					OptInOnboardingUtils = mod
+				},
+			),
+			getModules(
+				withProps<ChannelCollapseActionCreators>(
+					'update',
+					'toggleCollapseGuild',
+				),
+				mod => {
+					ChannelCollapseActionCreators = mod
+				},
+			),
 			getModules(
 				withProps<InstantInviteActionCreators>(
 					'acceptInvite',
@@ -119,11 +151,6 @@ export default plugin<{ jsonStorage: Settings }>({
 function noop() { }
 
 function applySettings(guildId: string) {
-	const [GuildNotificationSettingsActionCreators] = lookupModule(
-		withProps<GuildNotificationSettingsActionCreators>(
-			'updateGuildNotificationSettings',
-		),
-	)
 	const settings = { ...DefaultSettings, ...storage.cache }
 
 	GuildNotificationSettingsActionCreators?.updateGuildNotificationSettings(
@@ -149,19 +176,11 @@ function applySettings(guildId: string) {
 }
 
 function showAllChannels(guildId: string) {
-	const [OptIn] = lookupModule(withProps<OptInModule>('isOptInEnabledForGuild'))
-	const [OptInOnboardingUtils] = lookupModule(
-		withProps<OptInOnboardingUtils>('toggleShowAllChannels'),
-	)
-
 	if (OptIn?.isOptInEnabledForGuild(guildId))
 		OptInOnboardingUtils?.toggleShowAllChannels(guildId)
 }
 
 function hideVoiceNames(guildId: string) {
-	const [ChannelCollapseActionCreators] = lookupModule(
-		withProps<ChannelCollapseActionCreators>('update', 'toggleCollapseGuild'),
-	)
 	const ChannelStore = Stores.ChannelStore as DiscordModules.Flux.Store<{
 		getChannelIds(guildId: string): string[]
 		getChannel(channelId: string): { isGuildVocal(): boolean } | undefined
