@@ -1,0 +1,20 @@
+{
+	"format": 1,
+	"id": "dev.loki-vtx.proxy.link",
+	"name": "Copy Proxy Link",
+	"description": "Copy the proxy link of any image, the difference? proxy link does not expire by time.",
+	"author": "Loki-vtx <918437723755384832> (https://github.com/Loki-vtx \"GitHub\")",
+	"icon": "LinkPlusIcon",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
