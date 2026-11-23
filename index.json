@@ -277,6 +277,84 @@
         }
       }
     },
+    "dev.tralwdwd.action-sheet-patcher": {
+      "name": "tralwdwd's action sheet patcher library",
+      "description": "Provides a library to easily patch action sheets.",
+      "author": "tralwdwdd <1278723517436788897> (https://github.com/tralwdwd \"GitHub\")",
+      "icon": "FileIcon",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://community.valenced.app/pool/dev.tralwdwd.action-sheet-patcher@1.0.0.zip",
+          "sha256": "77fa3a215c730e2b16465c0a5cf3f6682bd8071f4d45d3ee2039b6cce4bcc136",
+          "size": 1229,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    },
+    "dev.tralwdwdd.jump-to-top": {
+      "name": "Jump To Top",
+      "description": "Adds a button to jump to the first message in a chat.",
+      "author": "tralwdwdd <1278723517436788897> (https://github.com/tralwdwd \"GitHub\")",
+      "icon": "ArrowSmallUpIcon",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://community.valenced.app/pool/dev.tralwdwdd.jump-to-top@1.0.0.zip",
+          "sha256": "829f5308a842fe09cf7f8690995551a5475fc61b93dff1563de1465032346941",
+          "size": 1684,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            },
+            "dev.tralwdwd.action-sheet-patcher": {
+              "version": ">=1.0.0"
+            }
+          }
+        }
+      }
+    },
+    "dev.tralwdwdd.search-action-sheet": {
+      "name": "Search Action Sheet",
+      "description": "Makes search results open the action sheet on long press.",
+      "author": "tralwdwdd <1278723517436788897> (https://github.com/tralwdwd \"GitHub\")",
+      "icon": "icon-search",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://community.valenced.app/pool/dev.tralwdwdd.search-action-sheet@1.0.0.zip",
+          "sha256": "9ed91434e5dd9152a319bc760b29d22306587a9e463ebf0bacc997f4b4e6dc99",
+          "size": 1048,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            },
+            "dev.tralwdwd.action-sheet-patcher": {
+              "version": ">=1.0.0"
+            }
+          }
+        }
+      }
+    },
     "hakuxyz.clear-urls": {
       "name": "Clear URLs",
       "description": "Strips tracking parameters from URLs you view, send, or edit.",
