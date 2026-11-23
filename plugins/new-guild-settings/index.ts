@@ -1,5 +1,5 @@
 import { Stores } from '@valenced/discord/flux'
-import { getModules } from '@valenced/modules/finders'
+import { lookupModule } from '@valenced/modules/finders'
 import { withProps } from '@valenced/modules/finders/filters'
 import { after, instead } from '@valenced/patcher'
 import SettingsComponent from './settings'
@@ -75,75 +75,61 @@ export default plugin<{ jsonStorage: Settings }>({
 	},
 	start({ cleanup, jsonStorage }) {
 		storage = jsonStorage
+		GuildNotificationSettingsActionCreators = lookupModule(
+			withProps<GuildNotificationSettingsActionCreators>(
+				'updateGuildNotificationSettings',
+			),
+		)[0]
+		OptIn = lookupModule(withProps<OptInModule>('isOptInEnabledForGuild'))[0]
+		OptInOnboardingUtils = lookupModule(
+			withProps<OptInOnboardingUtils>('toggleShowAllChannels'),
+		)[0]
+		ChannelCollapseActionCreators = lookupModule(
+			withProps<ChannelCollapseActionCreators>(
+				'update',
+				'toggleCollapseGuild',
+			),
+		)[0]
 
-		cleanup(
-			getModules(
-				withProps<GuildNotificationSettingsActionCreators>(
-					'updateGuildNotificationSettings',
+		const InstantInviteActionCreators = lookupModule(
+			withProps<InstantInviteActionCreators>(
+				'acceptInvite',
+				'acceptInviteAndTransitionToInviteChannel',
+			),
+		)[0]
+		if (InstantInviteActionCreators)
+			cleanup(
+				after(InstantInviteActionCreators, 'acceptInvite', result => {
+					result.then(invite => {
+						if (!invite?.new_member) return
+
+						const guildId = invite.guild_id ?? invite.guild?.id
+						if (guildId) applySettings(guildId)
+					}, noop)
+
+					return result
+				}),
+			)
+
+		const GuildActionCreators = lookupModule(
+			withProps<GuildActionCreators>('joinGuild', 'transitionToGuildSync'),
+		)[0]
+		if (GuildActionCreators)
+			cleanup(
+				instead(
+					GuildActionCreators,
+					'joinGuild',
+					function (args, original) {
+						const result = Reflect.apply(original, this, args)
+						const [guildId, options] = args
+
+						if (!options?.lurker)
+							result.then(() => applySettings(guildId), noop)
+
+						return result
+					},
 				),
-				mod => {
-					GuildNotificationSettingsActionCreators = mod
-				},
-			),
-			getModules(withProps<OptInModule>('isOptInEnabledForGuild'), mod => {
-				OptIn = mod
-			}),
-			getModules(
-				withProps<OptInOnboardingUtils>('toggleShowAllChannels'),
-				mod => {
-					OptInOnboardingUtils = mod
-				},
-			),
-			getModules(
-				withProps<ChannelCollapseActionCreators>(
-					'update',
-					'toggleCollapseGuild',
-				),
-				mod => {
-					ChannelCollapseActionCreators = mod
-				},
-			),
-			getModules(
-				withProps<InstantInviteActionCreators>(
-					'acceptInvite',
-					'acceptInviteAndTransitionToInviteChannel',
-				),
-				InstantInviteActionCreators => {
-					cleanup(
-						after(InstantInviteActionCreators, 'acceptInvite', result => {
-							result.then(invite => {
-								if (!invite?.new_member) return
-
-								const guildId = invite.guild_id ?? invite.guild?.id
-								if (guildId) applySettings(guildId)
-							}, noop)
-
-							return result
-						}),
-					)
-				},
-			),
-			getModules(
-				withProps<GuildActionCreators>('joinGuild', 'transitionToGuildSync'),
-				GuildActionCreators => {
-					cleanup(
-						instead(
-							GuildActionCreators,
-							'joinGuild',
-							function (args, original) {
-								const result = Reflect.apply(original, this, args)
-								const [guildId, options] = args
-
-								if (!options?.lurker)
-									result.then(() => applySettings(guildId), noop)
-
-								return result
-							},
-						),
-					)
-				},
-			),
-		)
+			)
 	},
 	SettingsComponent,
 })
