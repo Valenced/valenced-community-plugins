@@ -1,0 +1,7 @@
+{
+	"name": "@valenced-community/media-utils",
+	"private": true,
+	"dependencies": {
+		"@pdf-lib/upng": "^1.0.1"
+	}
+}
