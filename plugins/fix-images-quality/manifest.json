@@ -1,0 +1,23 @@
+{
+	"format": 1,
+	"id": "dev.nexza.fix-images-quality",
+	"name": "Fix Images Quality",
+	"description": "Raises the resolution of Discord CDN images that ask for a small size.",
+	"author": "NexzaDev (https://github.com/NexzaDev \"GitHub\")",
+	"contributors": [
+		"Nuckyz (https://github.com/Nuckyz \"GitHub\")"
+	],
+	"icon": "ImageIcon",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
