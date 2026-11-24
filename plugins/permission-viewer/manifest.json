@@ -1,0 +1,21 @@
+{
+	"format": 1,
+	"id": "liver.permission-viewer",
+	"name": "Permission Viewer",
+	"description": "Inspect the permissions a server, channel, role, or member has.",
+	"author": "Livie <755950362342457384>",
+	"contributors": ["tralwdwdd"],
+	"icon": "ShieldUserIcon",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
