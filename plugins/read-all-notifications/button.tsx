@@ -2,8 +2,20 @@ import { getAssetIdByName } from '@valenced/assets'
 import { Design } from '@valenced/discord/design'
 import { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { getComponentName, isComponent, isRecord } from './guards'
-import { acquireButtonId, releaseButton, reportButtonHeight } from './layout'
+import {
+	getComponentName,
+	isComponent,
+	isFavoritesLabel,
+	isRecord,
+} from './guards'
+import {
+	acquireButtonId,
+	isFavoritesSeen,
+	markFavoritesSeen,
+	releaseButton,
+	reportButtonHeight,
+	subscribeFavorites,
+} from './layout'
 import { markAllAsRead } from './unread'
 import type { LayoutChangeEvent } from 'react-native'
 import type { AnyComponent, AnyProps } from './guards'
@@ -44,22 +56,46 @@ function useButtonId(): number {
 	return id
 }
 
-export function createDirectMessagesEntryPatcher() {
+function useShowOnDm(): boolean {
+	const [show, setShow] = useState(false)
+
+	useEffect(() => {
+		const check = () => setShow(!isFavoritesSeen())
+		const timer = setTimeout(check, 0)
+		const unsubscribe = subscribeFavorites(check)
+		return () => {
+			clearTimeout(timer)
+			unsubscribe()
+		}
+	}, [])
+
+	return show
+}
+
+export function createEntryPatcher() {
 	const wrappers = new WeakMap<object, AnyComponent>()
 	const wrapperTypes = new WeakSet<object>()
 	let renderingWrapper = false
 
-	function wrap(Original: AnyComponent): AnyComponent {
+	function wrap(Original: AnyComponent) {
 		const existing = wrappers.get(Original)
 		if (existing) return existing
 
-		function ReadAllDmWrapper(props: AnyProps) {
+		function ReadAllEntryWrapper(props: AnyProps) {
 			renderingWrapper = true
 			try {
+				const label = isRecord(props) ? props.label : undefined
+				const isFavorites = isFavoritesLabel(label)
+
+				if (isFavorites) markFavoritesSeen()
+
+				const showOnDm = useShowOnDm()
+				const showButton = isFavorites || showOnDm
+
 				return (
 					<>
 						<Original {...props} />
-						<ReadAllButton />
+						{showButton ? <ReadAllButton /> : null}
 					</>
 				)
 			} finally {
@@ -67,9 +103,9 @@ export function createDirectMessagesEntryPatcher() {
 			}
 		}
 
-		wrappers.set(Original, ReadAllDmWrapper)
-		wrapperTypes.add(ReadAllDmWrapper)
-		return ReadAllDmWrapper
+		wrappers.set(Original, ReadAllEntryWrapper)
+		wrapperTypes.add(ReadAllEntryWrapper)
+		return ReadAllEntryWrapper
 	}
 
 	function isEntryType(type: unknown): type is AnyComponent {
@@ -81,15 +117,22 @@ export function createDirectMessagesEntryPatcher() {
 		)
 	}
 
-	function isDirectMessagesProps(props: unknown): props is AnyProps {
-		return isRecord(props) && props.label === DirectMessagesLabel
+	function isLabeledProps(props: unknown, label: string): props is AnyProps {
+		return isRecord(props) && props.label === label
 	}
 
 	return function patchEntry<Args extends [unknown, unknown?, ...unknown[]]>(
 		args: Args,
 	): Args {
 		const [type, props] = args
-		if (!isDirectMessagesProps(props) || !isEntryType(type)) return args
+		if (!isEntryType(type)) return args
+
+		if (
+			!isLabeledProps(props, DirectMessagesLabel) &&
+			!isFavoritesLabel(props.label)
+		) {
+			return args
+		}
 
 		args[0] = wrap(type)
 		return args

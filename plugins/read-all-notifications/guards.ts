@@ -11,6 +11,12 @@ export function isComponent(value: unknown): value is AnyComponent {
 	return typeof value === 'function' || isRecord(value)
 }
 
+const FavoritesLabelPattern = /^\s*favou?rites\s*$/i
+
+export function isFavoritesLabel(label: unknown): boolean {
+	return typeof label === 'string' && FavoritesLabelPattern.test(label)
+}
+
 interface ComponentLike extends AnyProps {
 	displayName?: unknown
 	name?: unknown

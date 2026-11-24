@@ -1,8 +1,8 @@
-import { isRecord } from './guards'
-
-export const DirectMessagesRow = { section: 0, item: 0 } as const
+import { isFavoritesLabel, isRecord } from './guards'
 
 const GuildsBarListNativeId = 'guilds-bar-fast-list'
+
+export const DirectMessagesRow = { section: 0, item: 0 } as const
 
 type SizeFn = (section: number, item?: number) => number
 type RenderItemFn = (
@@ -16,7 +16,6 @@ interface FastListComputerLike {
 }
 
 interface FastListInstanceLike {
-	getSectionItemFromPosition?(position: number, overrides?: unknown): unknown
 	forceUpdate?(): void
 	computeBlocks?(): void
 	state?: { fastListComputer?: FastListComputerLike }
@@ -38,22 +37,49 @@ let sizeWrapper:
 	| undefined
 let renderItemWrapper: { original: unknown; fn: RenderItemFn } | undefined
 
-function isFastListInstance(value: unknown): value is FastListInstanceLike {
-	return (
-		isRecord(value) && typeof value.getSectionItemFromPosition === 'function'
-	)
+let favoritesSeen = false
+let favoritesRow: { section: number; item: number } | undefined
+
+const favoritesListeners = new Set<() => void>()
+
+export function isFavoritesSeen(): boolean {
+	return favoritesSeen
 }
 
-function isFastListRef(value: unknown): value is FastListRefLike {
-	return isRecord(value) && 'current' in value
+export function subscribeFavorites(listener: () => void): () => void {
+	favoritesListeners.add(listener)
+	return () => favoritesListeners.delete(listener)
+}
+
+export function markFavoritesSeen(): void {
+	if (favoritesSeen) return
+	favoritesSeen = true
+	setTimeout(notifyFavorites, 0)
+}
+
+function notifyFavorites(): void {
+	for (const listener of favoritesListeners) listener()
 }
 
 function currentInstance(): FastListInstanceLike | undefined {
 	return capturedRef?.current ?? capturedInstance
 }
 
+function isFastListInstance(value: unknown): value is FastListInstanceLike {
+	return isRecord(value)
+}
+
+function isFastListRef(value: unknown): value is FastListRefLike {
+	return isRecord(value) && 'current' in value
+}
+
 export function acquireButtonId(): number {
 	return nextButtonId++
+}
+
+export function releaseButton(id: number): void {
+	if (!heights.delete(id)) return
+	recompute()
 }
 
 export function reportButtonHeight(id: number, height: number): void {
@@ -67,11 +93,6 @@ export function reportButtonHeight(id: number, height: number): void {
 	recompute()
 }
 
-export function releaseButton(id: number): void {
-	if (!heights.delete(id)) return
-	recompute()
-}
-
 function recompute(): void {
 	let total = 0
 	for (const height of heights.values()) total += height
@@ -81,7 +102,6 @@ function recompute(): void {
 
 	extraHeight = next
 	generation++
-
 	refreshLayoutModel()
 }
 
@@ -106,6 +126,9 @@ export function augmentGuildsBarListProps(props: unknown): unknown {
 
 	const { ref, itemSize, renderItem } = props
 	if (isFastListRef(ref)) capturedRef = ref
+
+	favoritesSeen = false
+	favoritesRow = undefined
 
 	const size =
 		typeof itemSize === 'function'
@@ -136,13 +159,11 @@ function getSizeWrapper(original: SizeFn): SizeFn {
 
 	const fn: SizeFn = (section, item) => {
 		const base = original(section, item) ?? 0
-		const isDirectMessagesRow =
-			section === DirectMessagesRow.section &&
-			(item ?? DirectMessagesRow.item) === DirectMessagesRow.item
-
-		if (!isDirectMessagesRow) return base
-
-		return base + extraHeight
+		const row = favoritesRow ?? DirectMessagesRow
+		if (section === row.section && (item ?? row.item) === row.item) {
+			return base + extraHeight
+		}
+		return base
 	}
 
 	sizeWrapper = { original, generation, fn }
@@ -156,7 +177,16 @@ function getRenderItemWrapper(original: RenderItemFn): RenderItemFn {
 
 	const fn: RenderItemFn = (section, item, instance) => {
 		if (isFastListInstance(instance)) capturedInstance = instance
-		return original(section, item, instance)
+
+		const element = original(section, item, instance)
+
+		if (isRecord(element) && isRecord(element.props)) {
+			if (isFavoritesLabel(element.props.label)) {
+				favoritesRow = { section, item: item ?? 0 }
+			}
+		}
+
+		return element
 	}
 
 	renderItemWrapper = { original, fn }
@@ -177,4 +207,7 @@ export function isGuildsBarListProps(props: unknown): boolean {
 export function resetLayoutBridge(): void {
 	sizeWrapper = undefined
 	renderItemWrapper = undefined
+	favoritesSeen = false
+	favoritesRow = undefined
+	favoritesListeners.clear()
 }

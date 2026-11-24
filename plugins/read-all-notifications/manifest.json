@@ -2,11 +2,11 @@
 	"format": 1,
 	"id": "dev.nexza.read-all-notifications",
 	"name": "Read All Notifications",
-	"description": "Mark unread server channels as read with a button under your DMs in the server list.",
-	"author": "NexzaDev (https://github.com/NexzaDev \"GitHub\")",
+	"description": "Mark unread server channels as read with a button in the server list, placed under your Favorites or Direct Messages.",
+	"author": "unalivin (https://github.com/unalivin \"GitHub\")",
 	"contributors": ["kemo (https://github.com/kem0x \"GitHub\")"],
 	"icon": "ChatCheckIcon",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"dependencies": {
 		"valenced.api": {
 			"version": ">=1 <2"
