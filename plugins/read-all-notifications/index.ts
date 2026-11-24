@@ -1,6 +1,6 @@
 import { before } from '@valenced/patcher'
 import { ReactJSXRuntime } from '@valenced/react'
-import { createDirectMessagesEntryPatcher } from './button'
+import { createEntryPatcher } from './button'
 import {
 	augmentGuildsBarListProps,
 	isGuildsBarListProps,
@@ -18,13 +18,13 @@ function patchGuildsBarList<Args extends [unknown, unknown?, ...unknown[]]>(
 }
 
 export default plugin({
-	start({ cleanup, plugin }) {
+	start({ cleanup }) {
 		if (plugin.startedLate) {
 			plugin.requireReload()
 			return
 		}
 
-		const patchEntry = createDirectMessagesEntryPatcher()
+		const patchEntry = createEntryPatcher()
 
 		cleanup(
 			before(ReactJSXRuntime, 'jsx', patchEntry),
@@ -34,6 +34,7 @@ export default plugin({
 			resetLayoutBridge,
 		)
 	},
+
 	stop({ plugin }) {
 		plugin.requireReload()
 	},
