@@ -2,10 +2,13 @@
 	"format": 1,
 	"id": "wolfie.add-attachments",
 	"name": "Add Attachments",
-	"description": "Add new attachments when editing messages.",
+	"description": "Add, view, and remove attachments when editing messages.",
 	"author": "Wolfie <347096063569559553> (https://wolfies.org/ \"Website\") (https://github.com/Wolfkid200444 \"GitHub\")",
+	"contributors": [
+		"hieuxyz <994819569795485747> (https://github.com/hieuxyz00 \"GitHub\")"
+	],
 	"icon": "PencilSparkleIcon",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"dependencies": {
 		"valenced.api": {
 			"version": ">=1 <2"
