@@ -1,0 +1,22 @@
+{
+	"format": 1,
+	"id": "dead1nsane.gantari",
+	"name": "Gantari",
+	"description": "Clean geometric sans-serif font. Best paired with RBW AMOLED.",
+	"author": "im__turbo__ <288054683161853952> (https://github.com/DEAD1nsane \"GitHub\")",
+	"version": "1.0.0",
+	"dependencies": {
+		"valenced.api": {
+			"version": ">=1 <2"
+		},
+		"discord": {
+			"version": "*"
+		},
+		"valenced.api.themes": {
+			"version": "*"
+		}
+	},
+	"dist": {
+		"script": "index.js"
+	}
+}
