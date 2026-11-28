@@ -12,8 +12,10 @@ function flattenArgs(args: CommandArg[]): CommandArg[] {
   return args.flatMap(arg => [arg, ...(arg.options ? flattenArgs(arg.options) : [])])
 }
 
-function v2Result(title: string, body: string, details: string[] = []) {
+function result(title: string, body: string, details: string[] = []) {
   const content = [title, body, ...details].join('\n')
+  // Keep content as a plain-text fallback for command-library versions that
+  // do not forward Components V2 fields. Runtime rendering still needs testing.
   return {
     content,
     flags: 1 << 15,
@@ -27,7 +29,7 @@ function v2Result(title: string, body: string, details: string[] = []) {
   } as any
 }
 
-async function copyEmojis(inputs: ReturnType<typeof parseEmojiInputs>, guildId: string) {
+async function copyEmojis(inputs: ReturnType<typeof parseEmojiInputs>['emojis'], guildId: string) {
   const response = await fetch(`${BRIDGE_URL.replace(/\/$/, '')}/copy-emojis`, {
     method: 'POST',
     headers: {
@@ -65,7 +67,7 @@ export default plugin({
       options: [
         {
           name: 'id',
-          description: 'Optional emoji ID(s), separated by spaces or commas.',
+          description: 'Emoji ID input; use full markup such as <:name:id>, not a bare numeric ID.',
           type: ApplicationCommandOptionType.STRING,
           required: false,
         },
@@ -78,36 +80,44 @@ export default plugin({
       ],
       async execute(args: CommandArg[], ctx: CommandContext) {
         const guildId = ctx.guild?.id
-        if (!guildId) return v2Result('Copy Emoji', 'Run this command inside the server where you want the emojis added.')
+        if (!guildId) return result('Copy Emoji', 'Run this command inside the server where you want the emojis added.')
 
         const flat = flattenArgs(args)
         const idValue = flat.find(arg => arg.name === 'id')?.value
         const emojiValue = flat.find(arg => arg.name === 'emoji')?.value
-        const inputs = parseEmojiInputs(idValue, emojiValue)
+        const parsed = parseEmojiInputs(idValue, emojiValue)
 
+        if (parsed.missingMetadataIds.length) {
+          return result(
+            'Emoji metadata required',
+            'A numeric ID alone does not contain the original name or animation status. Use full custom emoji markup.',
+            parsed.missingMetadataIds.slice(0, 10).map(id => `• ${id}`),
+          )
+        }
+        const inputs = parsed.emojis
         if (!inputs.length) {
-          return v2Result('Copy Emoji', 'Provide at least one custom emoji ID or emoji markup.')
+          return result('Copy Emoji', 'Provide full custom emoji markup, for example <:name:id> or <a:name:id>.')
         }
         if (inputs.length > 50) {
-          return v2Result('Copy Emoji', 'A maximum of 50 emojis can be processed per command. Split the list into smaller batches.')
+          return result('Copy Emoji', 'A maximum of 50 emojis can be processed per command. Split the list into smaller batches.')
         }
 
         try {
-          const result = await copyEmojis(inputs, guildId)
-          const created = result.created ?? []
-          const skipped = result.skipped ?? []
-          const failed = result.failed ?? []
+          const copied = await copyEmojis(inputs, guildId)
+          const created = copied.created ?? []
+          const skipped = copied.skipped ?? []
+          const failed = copied.failed ?? []
           const details = [
             `✅ Added: **${created.length}**`,
             `↪️ Skipped: **${skipped.length}**`,
             `❌ Failed: **${failed.length}**`,
-            ...created.slice(0, 15).map(item => `• ` + (item.animated ? `<a:${item.name}:${item.id}>` : `<:${item.name}:${item.id}>`)),
+            ...created.slice(0, 15).map(item => `• ${item.animated ? '<a:' : '<:'}${item.name}:${item.id}>`),
             ...skipped.slice(0, 8).map(item => `• ${item.name}: ${item.reason}`),
             ...failed.slice(0, 8).map(item => `• ${item.name}: ${item.reason}`),
           ]
-          return v2Result('Emoji copy finished', `Target: **${ctx.guild?.name ?? 'Current server'}**`, details)
+          return result('Emoji copy finished', `Target: **${ctx.guild?.name ?? 'Current server'}**`, details)
         } catch (error) {
-          return v2Result('Copy Emoji failed', error instanceof Error ? error.message : 'The emoji bridge could not complete the request.')
+          return result('Copy Emoji failed', error instanceof Error ? error.message : 'The emoji bridge could not complete the request.')
         }
       },
     })
