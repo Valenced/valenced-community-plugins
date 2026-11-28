@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "dev.hirotaka.copy-emoji",
+  "name": "Copy Emoji",
+  "description": "Bulk-copy custom emojis into the current server with /copy-emoji",
+  "author": "Hirotaka",
+  "version": "1.0.0",
+  "icon": "EmojiCopyIcon",
+  "dependencies": {
+    "valenced.api": { "version": ">=1 <2" },
+    "discord": { "version": "*" },
+    "dev.cocobo1.command-lib": { "version": ">=2 <3" }
+  },
+  "dist": { "script": "index.js" }
+}
