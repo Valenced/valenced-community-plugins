@@ -1,4 +1,5 @@
 import http from 'node:http'
+import { createHash } from 'node:crypto'
 
 const PORT = Number(process.env.PORT || 8787)
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN
@@ -17,7 +18,15 @@ function json(res, status, body) {
 }
 
 function safeName(value) {
-  return String(value || '').replace(/[^A-Za-z0-9_]/g, '_').slice(0, 32) || 'emoji'
+  return String(value || '').replace(/[^A-Za-z0-9_]/g, '_').slice(0, 32)
+}
+
+function normalizeName(value) {
+  return safeName(value).toLowerCase()
+}
+
+function sha256(bytes) {
+  return createHash('sha256').update(bytes).digest('hex')
 }
 
 async function discord(path, init = {}) {
@@ -39,7 +48,7 @@ async function discord(path, init = {}) {
 }
 
 async function getImage(id, animated) {
-  // Preserve the original CDN asset bytes; no resizing, recompression, or redraw.
+  // Forward the CDN response bytes unchanged; no resizing or recompression.
   const extensions = animated ? ['gif'] : ['png', 'webp']
   let lastError
   for (const ext of extensions) {
@@ -47,11 +56,24 @@ async function getImage(id, animated) {
     if (response.ok) {
       const bytes = Buffer.from(await response.arrayBuffer())
       const mime = response.headers.get('content-type') || (ext === 'gif' ? 'image/gif' : 'image/png')
-      return `data:${mime};base64,${bytes.toString('base64')}`
+      return { bytes, dataUri: `data:${mime};base64,${bytes.toString('base64')}` }
     }
     lastError = new Error(`Could not fetch source emoji ${id} (${response.status})`)
   }
   throw lastError
+}
+
+async function getExistingHashes(emojis) {
+  const hashes = new Set()
+  for (const emoji of emojis) {
+    try {
+      const image = await getImage(emoji.id, Boolean(emoji.animated))
+      hashes.add(sha256(image.bytes))
+    } catch {
+      // Name comparison remains available if an existing CDN asset cannot be read.
+    }
+  }
+  return hashes
 }
 
 async function handle(req, res) {
@@ -74,28 +96,37 @@ async function handle(req, res) {
 
   try {
     const existing = await discord(`/guilds/${guildId}/emojis`)
-    const existingIds = new Set(existing.map(item => item.id))
+    const existingNames = new Set(existing.map(item => normalizeName(item.name)))
+    const existingHashes = await getExistingHashes(existing)
     const created = [], skipped = [], failed = []
 
     for (const item of emojis) {
       const id = String(item.id || '')
       const name = safeName(item.name)
-      if (!/^\d{17,20}$/.test(id)) {
-        failed.push({ id, name, reason: 'Invalid emoji ID' })
-        continue
-      }
-      if (existingIds.has(id)) {
-        skipped.push({ id, name, reason: 'Already present (Discord emoji IDs are globally unique)' })
+      if (!/^\d{17,20}$/.test(id) || !name) {
+        failed.push({ id, name, reason: 'Full emoji markup with a valid name and ID is required' })
         continue
       }
 
       try {
         const image = await getImage(id, Boolean(item.animated))
+        const imageHash = sha256(image.bytes)
+
+        if (existingNames.has(normalizeName(name))) {
+          skipped.push({ id, name, reason: 'An emoji with this name already exists in the destination server' })
+          continue
+        }
+        if (existingHashes.has(imageHash)) {
+          skipped.push({ id, name, reason: 'An emoji with identical image bytes already exists in the destination server' })
+          continue
+        }
+
         const uploaded = await discord(`/guilds/${guildId}/emojis`, {
           method: 'POST',
-          body: JSON.stringify({ name, image }),
+          body: JSON.stringify({ name, image: image.dataUri }),
         })
-        existingIds.add(uploaded.id)
+        existingNames.add(normalizeName(uploaded.name))
+        existingHashes.add(imageHash)
         created.push({ id: uploaded.id, name: uploaded.name, animated: Boolean(uploaded.animated) })
       } catch (error) {
         failed.push({ id, name, reason: error.message })
